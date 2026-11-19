@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PaperScout – Prototyp</title>
+<title>PaperScout – Prototype</title>
 <style>
   :root{
     color-scheme:light;
@@ -106,7 +106,7 @@
   aside{width:var(--side-w);flex:none;background:var(--card);border-left:1px solid var(--line);position:sticky;top:0;height:100dvh;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:6px;color:var(--ink)}
   .side-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:6px 0 8px;display:flex;justify-content:space-between;align-items:center}
   .close-side{display:none;border:0;background:var(--soft2);width:30px;height:30px;border-radius:8px;font-size:16px;cursor:pointer;color:var(--ink)}
-  .side-foot{margin-top:auto;padding-top:14px;padding-right:64px;font-size:13px;color:var(--muted)}
+  .side-foot{margin-top:auto;padding-top:14px;font-size:13px;color:var(--muted)}
   .step{display:flex;gap:10px;padding:9px 8px;border-radius:10px;position:relative}
   .step .n{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);flex:none;background:var(--card)}
   .step .t{font-size:14px;font-weight:600;color:var(--muted)}
@@ -133,11 +133,18 @@
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .flag{width:22px;height:15px;border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
   .flag svg{display:block;width:100%;height:100%}
-  #langWrap{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:70}
-  #langBtn{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 12px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+  .lang-slot{display:flex;flex:none;align-items:center}
+  .side-head{margin:-4px 0 8px}
+  #langWrap{position:relative;z-index:70;text-transform:none;letter-spacing:normal}
+  #langBtn{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);border-radius:999px;height:34px;padding:0 9px 0 11px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink)}
+  #langBtn:hover{background:var(--soft)}
   #langBtn .flag{width:24px;height:16px}
-  #langMenu{position:absolute;right:0;bottom:46px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:180px;box-shadow:0 10px 30px rgba(0,0,0,.16);display:none}
-  #langMenu.open{display:block}
+  #langBtn .chev{width:17px;height:17px;flex:none;color:var(--ink);transition:transform .2s}
+  #langWrap.open #langBtn .chev{transform:rotate(180deg)}
+  #langMenu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:180px;box-shadow:0 10px 30px rgba(0,0,0,.16);display:none}
+  #langWrap.open #langMenu{display:block}
+  .btn.ext{background:var(--card);border:1.5px solid var(--brand);color:var(--brand);margin-bottom:6px}
+  .ext-note{margin:0 2px 14px}
   #langMenu .lh{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:6px 10px 4px}
   .lopt{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:9px 10px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;color:var(--ink);text-align:left}
   .lopt:hover{background:var(--soft2)}
@@ -149,6 +156,7 @@
     .menu-btn{display:inline-flex}
     .close-side{display:block}
     #scrim.show{display:block}
+    #langBtnText{display:none}
   }
 </style>
 </head>
@@ -159,6 +167,7 @@
       <button class="back" id="backBtn" onclick="goBack()" style="display:none">‹</button>
       <div class="mark" onclick="newProject()" style="cursor:pointer">P</div>
       <h1 id="topTitle">PaperScout</h1>
+      <div id="langSlotTop" class="lang-slot"></div>
       <button class="menu-btn" onclick="openSide()"><span class="dotlive" id="liveDot"></span> <span data-i18n="menu"></span></button>
     </div>
 
@@ -195,6 +204,7 @@
         <div class="summary" id="resSummary"></div>
         <h2 data-i18n="res_h"></h2>
         <div class="card soft" style="padding:10px 12px"><div class="small muted" id="resNote"></div></div>
+        <div id="resExt"></div>
         <div id="resList"></div>
         <button class="btn ghost" onclick="openPreselect('all')" data-i18n="res_pre_btn"></button>
       </section>
@@ -243,7 +253,7 @@
 
   <!-- ===== RECHTE LEISTE ===== -->
   <aside id="side">
-    <div class="side-title"><span data-i18n="side_process"></span><button class="close-side" onclick="closeSide()">✕</button></div>
+    <div class="side-title side-head"><span data-i18n="side_process"></span><div style="display:flex;align-items:center;gap:8px"><div id="langSlotSide" class="lang-slot"></div><button class="close-side" onclick="closeSide()">✕</button></div></div>
     <div id="steps"></div>
     <div style="height:14px"></div>
     <div class="side-title"><span data-i18n="side_archive"></span><span class="small" style="font-weight:500;text-transform:none;letter-spacing:0" id="archCount"></span></div>
@@ -262,7 +272,7 @@
       <button class="lopt" data-l="en" onclick="setLang('en')"><span class="flag" data-flag="en"></span>English<span class="chk"></span></button>
       <button class="lopt" data-l="es" onclick="setLang('es')"><span class="flag" data-flag="es"></span>Español<span class="chk"></span></button>
     </div>
-    <button id="langBtn" onclick="toggleLangMenu(event)"><span class="flag" id="langBtnFlag"></span><span id="langBtnText"></span><span style="color:var(--muted)">▴</span></button>
+    <button id="langBtn" onclick="toggleLangMenu(event)"><span class="flag" id="langBtnFlag"></span><span id="langBtnText"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
 
   <div id="toast"></div>
@@ -281,14 +291,21 @@ const LANG_NAMES = {de:'Deutsch', en:'English', es:'Español'};
 
 const STR = {
 de:{
-  menu:'Prozess', lang:'Sprache',
+  menu:'Prozess', lang:'Sprache', doc_title:'PaperScout – Prototyp',
+  ln_de:'Deutsch', ln_en:'Englisch', ln_es:'Spanisch', and_word:'und',
+  ext_btn:'🌐 Erweiterte Suche', ext_hint:'Zu wenige Treffer? Sucht zusätzlich nach Papers auf {langs}. Deine bisherigen Ergebnisse bleiben erhalten.',
+  ext_done:'Erweiterte Suche ausgeführt: {n} weitere Papers auf {langs} hinzugefügt.',
+  ext_l0:'Erweiterte Suche: zusätzlich Papers auf {langs}. Deine bisherigen Ergebnisse bleiben erhalten.', ext_l2:'<b>{n} weitere Papers</b> gefunden → zur Vorauswahl hinzugefügt',
+  bool_l0:'Thema verstanden. Suche mit Operatoren: <b>{e}</b>', s1_bool:'Suche mit Operatoren (AND, OR, NOT …)',
+  l6_none:'Fertig. Keine Papers auf {lang} haben die Prüfung bestanden.', res_empty:'Auf {lang} wurden keine Papers gefunden, die die Prüfung bestehen. Probier die erweiterte Suche.',
+  t_ext_fail:'Erweiterte Suche fehlgeschlagen, bitte nochmal versuchen.',
   start_h:'Wofür brauchst du Papers?',
   start_p:'Beschreib deine Situation oder dein Thema. Wir suchen passende wissenschaftliche Papers, sortieren erfundene oder unsaubere aus und bewerten den Rest von 1 bis 10 nach der Qualität ihrer Quellen.',
   start_ph:'z. B. Ich schreibe meine Bachelorarbeit über den Einfluss von Social Media auf die Konzentration von Studierenden und brauche aktuelle Studien.',
   examples_l:'Beispiele:',
   ex0:'Bachelorarbeit: Social Media und Konzentration von Studierenden', ex1:'Hausarbeit: Schlafmangel und Gedächtnis bei jungen Erwachsenen', ex2:'Seminar: Homeoffice und Produktivität',
   search_btn:'Papers suchen',
-  howto:'<b style="color:var(--ink)">So läuft es ab:</b> 1 Thema verstehen · 2 Vorauswahl · 3 Prüfung (erfunden? zurückgezogen? unseriös?) · 4 Bewertung 1–10 · 5 Ergebnis. Den Stand siehst du rechts in der Leiste. Die Papers kommen live aus der offenen Datenbank OpenAlex. Schreib ganze Sätze, gesucht wird nach ihrer Bedeutung, in jeder Sprache.',
+  howto:'<b style="color:var(--ink)">So läuft es ab:</b> 1 Thema verstehen · 2 Vorauswahl · 3 Prüfung (erfunden? zurückgezogen? unseriös?) · 4 Bewertung 1–10 · 5 Ergebnis. Den Stand siehst du rechts in der Leiste. Die Papers kommen live aus der offenen Datenbank OpenAlex, in der eingestellten Sprache. Schreib ganze Sätze, gesucht wird nach ihrer Bedeutung. Für komplexe Suchen gehen auch AND, OR, NOT (oder UND, ODER, NICHT), "Anführungszeichen", (Klammern), -Wort zum Ausschließen und * als Platzhalter.',
   run_sub:'Das dauert ein paar Sekunden.',
   res_topic:'Dein Thema', found:'gefunden', rejected:'aussortiert', rated:'bewertet',
   res_h:'Bewertete Papers (nach Bewertung sortiert)',
@@ -317,7 +334,7 @@ de:{
   s4:'Bewertung 1–10', s4_idle:'Nach Qualität der Quellen', s4_d:'{n} Papers nach Quellenqualität bewertet', s4_act:'Bewertungen ansehen ›',
   s5:'Ergebnis', s5_d:'Fertig · Ø {a}', s5_act:'Ergebnis öffnen ›', running_now:'läuft gerade …',
   arch_meta:'{d} · {n} Papers · Ø {a}', today:'Heute', d12:'vor 12 Tagen', w5:'vor 5 Wochen',
-  l0:'Thema verstanden. Gesucht wird nach der Bedeutung deines ganzen Satzes.', l1:'Suche in OpenAlex (offene Datenbank mit 250 Mio. wissenschaftlichen Werken) …', l2:'<b>{n} Papers</b> gefunden → Vorauswahl angelegt',
+  l0:'Thema verstanden. Gesucht wird nach der Bedeutung deines ganzen Satzes.', l1:'Suche in OpenAlex (offene Datenbank mit 250 Mio. wissenschaftlichen Werken) nach Papers auf {lang} …', l2:'<b>{n} Papers</b> gefunden → Vorauswahl angelegt',
   l3:'Prüfe jedes Paper: Existiert es wirklich? Zurückgezogen? Ist es eine Studie? Hat es ein Quellenverzeichnis?', l4:'<b>{n} aussortiert</b>: {r}',
   l5:'Bewerte {n} Papers anhand ihrer Quellen (Peer-Review, Aktualität, Auffindbarkeit, Primärquellen, Eigenzitate) …', l6:'Fertig. Beste Bewertung: <b>{b}/10</b>, Durchschnitt {a}',
   l_offline:'Datenbank nicht erreichbar, ich zeige Beispiel-Daten.', l_none:'Keine Papers gefunden. Beschreib dein Thema etwas anders.',
@@ -333,14 +350,21 @@ de:{
   rl_notfound:'Weder DOI noch Verlag sind hinterlegt. Das Paper lässt sich nicht eindeutig nachweisen.'
 },
 en:{
-  menu:'Process', lang:'Language',
+  menu:'Process', lang:'Language', doc_title:'PaperScout – Prototype',
+  ln_de:'German', ln_en:'English', ln_es:'Spanish', and_word:'and',
+  ext_btn:'🌐 Extended search', ext_hint:'Too few results? Also searches for papers in {langs}. Your current results are kept.',
+  ext_done:'Extended search done: {n} more papers in {langs} added.',
+  ext_l0:'Extended search: also looking for papers in {langs}. Your current results are kept.', ext_l2:'<b>{n} more papers</b> found → added to the preselection',
+  bool_l0:'Topic understood. Searching with operators: <b>{e}</b>', s1_bool:'Searching with operators (AND, OR, NOT …)',
+  l6_none:'Done. No papers in {lang} passed the check.', res_empty:'No papers in {lang} passed the check. Try the extended search.',
+  t_ext_fail:'Extended search failed, please try again.',
   start_h:'What do you need papers for?',
   start_p:'Describe your situation or topic. We find matching academic papers, remove fabricated or sloppy ones, and rate the rest from 1 to 10 by the quality of their sources.',
   start_ph:"e.g. I'm writing my bachelor's thesis on how social media affects students' concentration and need recent studies.",
   examples_l:'Examples:',
   ex0:"Bachelor's thesis: social media and students' concentration", ex1:'Term paper: sleep loss and memory in young adults', ex2:'Seminar: working from home and productivity',
   search_btn:'Find papers',
-  howto:'<b style="color:var(--ink)">How it works:</b> 1 Understand topic · 2 Preselection · 3 Check (fabricated? retracted? dubious?) · 4 Rating 1–10 · 5 Result. Follow the progress in the panel on the right. Papers come live from the open OpenAlex database. Write full sentences: the search looks for their meaning, in any language.',
+  howto:'<b style="color:var(--ink)">How it works:</b> 1 Understand topic · 2 Preselection · 3 Check (fabricated? retracted? dubious?) · 4 Rating 1–10 · 5 Result. Follow the progress in the panel on the right. Papers come live from the open OpenAlex database, in the language you have selected. Write full sentences: the search looks for their meaning. For complex searches you can also use AND, OR, NOT, "quotes", (parentheses), -word to exclude and * as a wildcard.',
   run_sub:'This takes a few seconds.',
   res_topic:'Your topic', found:'found', rejected:'removed', rated:'rated',
   res_h:'Rated papers (sorted by rating)',
@@ -369,7 +393,7 @@ en:{
   s4:'Rating 1–10', s4_idle:'By quality of sources', s4_d:'{n} papers rated by source quality', s4_act:'View ratings ›',
   s5:'Result', s5_d:'Done · avg {a}', s5_act:'Open result ›', running_now:'running …',
   arch_meta:'{d} · {n} papers · avg {a}', today:'Today', d12:'12 days ago', w5:'5 weeks ago',
-  l0:'Topic understood. Searching by the meaning of your whole sentence.', l1:'Searching OpenAlex (open database of 250 million scholarly works) …', l2:'<b>{n} papers</b> found → preselection created',
+  l0:'Topic understood. Searching by the meaning of your whole sentence.', l1:'Searching OpenAlex (open database of 250 million scholarly works) for papers in {lang} …', l2:'<b>{n} papers</b> found → preselection created',
   l3:'Checking each paper: Does it really exist? Retracted? Is it a study? Does it have a reference list?', l4:'<b>{n} removed</b>: {r}',
   l5:'Rating {n} papers by their sources (peer review, recency, traceability, primary sources, self-citations) …', l6:'Done. Best rating: <b>{b}/10</b>, average {a}',
   l_offline:'Database not reachable, showing sample data instead.', l_none:'No papers found. Try describing your topic differently.',
@@ -385,14 +409,21 @@ en:{
   rl_notfound:'Neither a DOI nor a publisher is on record. The paper cannot be clearly verified.'
 },
 es:{
-  menu:'Proceso', lang:'Idioma',
+  menu:'Proceso', lang:'Idioma', doc_title:'PaperScout – Prototipo',
+  ln_de:'alemán', ln_en:'inglés', ln_es:'español', and_word:'y',
+  ext_btn:'🌐 Búsqueda ampliada', ext_hint:'¿Pocos resultados? Busca además papers en {langs}. Tus resultados actuales se mantienen.',
+  ext_done:'Búsqueda ampliada hecha: {n} papers más en {langs} añadidos.',
+  ext_l0:'Búsqueda ampliada: también papers en {langs}. Tus resultados actuales se mantienen.', ext_l2:'<b>{n} papers más</b> encontrados → añadidos a la preselección',
+  bool_l0:'Tema entendido. Búsqueda con operadores: <b>{e}</b>', s1_bool:'Búsqueda con operadores (AND, OR, NOT …)',
+  l6_none:'Listo. Ningún paper en {lang} superó la comprobación.', res_empty:'Ningún paper en {lang} superó la comprobación. Prueba la búsqueda ampliada.',
+  t_ext_fail:'La búsqueda ampliada falló, inténtalo de nuevo.',
   start_h:'¿Para qué necesitas papers?',
   start_p:'Describe tu situación o tu tema. Buscamos papers científicos adecuados, descartamos los inventados o poco rigurosos y puntuamos el resto de 1 a 10 según la calidad de sus fuentes.',
   start_ph:'p. ej. Estoy escribiendo mi TFG sobre la influencia de las redes sociales en la concentración de los estudiantes y necesito estudios recientes.',
   examples_l:'Ejemplos:',
   ex0:'TFG: redes sociales y concentración de los estudiantes', ex1:'Trabajo: falta de sueño y memoria en adultos jóvenes', ex2:'Seminario: teletrabajo y productividad',
   search_btn:'Buscar papers',
-  howto:'<b style="color:var(--ink)">Así funciona:</b> 1 Entender el tema · 2 Preselección · 3 Comprobación (¿inventado? ¿retirado? ¿dudoso?) · 4 Puntuación 1–10 · 5 Resultado. El progreso se ve en la barra de la derecha. Los papers vienen en directo de la base de datos abierta OpenAlex. Escribe frases completas: se busca por su significado, en cualquier idioma.',
+  howto:'<b style="color:var(--ink)">Así funciona:</b> 1 Entender el tema · 2 Preselección · 3 Comprobación (¿inventado? ¿retirado? ¿dudoso?) · 4 Puntuación 1–10 · 5 Resultado. El progreso se ve en la barra de la derecha. Los papers vienen en directo de la base de datos abierta OpenAlex, en el idioma seleccionado. Escribe frases completas: se busca por su significado. Para búsquedas complejas también puedes usar AND, OR, NOT (o Y, O, NO), "comillas", (paréntesis), -palabra para excluir y * como comodín.',
   run_sub:'Tarda unos segundos.',
   res_topic:'Tu tema', found:'encontrados', rejected:'descartados', rated:'puntuados',
   res_h:'Papers puntuados (ordenados por puntuación)',
@@ -421,7 +452,7 @@ es:{
   s4:'Puntuación 1–10', s4_idle:'Según la calidad de las fuentes', s4_d:'{n} papers puntuados por calidad de fuentes', s4_act:'Ver puntuaciones ›',
   s5:'Resultado', s5_d:'Listo · media {a}', s5_act:'Abrir resultado ›', running_now:'en curso …',
   arch_meta:'{d} · {n} papers · media {a}', today:'Hoy', d12:'hace 12 días', w5:'hace 5 semanas',
-  l0:'Tema entendido. Se busca por el significado de toda tu frase.', l1:'Buscando en OpenAlex (base de datos abierta con 250 millones de obras) …', l2:'<b>{n} papers</b> encontrados → preselección creada',
+  l0:'Tema entendido. Se busca por el significado de toda tu frase.', l1:'Buscando en OpenAlex (base de datos abierta con 250 millones de obras) papers en {lang} …', l2:'<b>{n} papers</b> encontrados → preselección creada',
   l3:'Comprobando cada paper: ¿Existe de verdad? ¿Retirado? ¿Es un estudio? ¿Tiene bibliografía?', l4:'<b>{n} descartados</b>: {r}',
   l5:'Puntuando {n} papers según sus fuentes (revisión por pares, actualidad, localización, fuentes primarias, autocitas) …', l6:'Listo. Mejor puntuación: <b>{b}/10</b>, media {a}',
   l_offline:'Base de datos no disponible, muestro datos de ejemplo.', l_none:'No se encontraron papers. Describe tu tema de otra forma.',
@@ -437,7 +468,7 @@ es:{
   rl_notfound:'No constan ni DOI ni editorial. El paper no se puede verificar con claridad.'
 }};
 
-let L = 'de';
+let L = 'en';
 try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
 function t(key, vars){ let s = (STR[L][key] !== undefined ? STR[L][key] : STR.de[key]) || key; if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
 function tx(v){ if(Array.isArray(v)) return v; return (v && typeof v==='object') ? (v[L] || v.de) : v; }
@@ -569,7 +600,7 @@ function fromWork(w){
   const p = {
     id: nextId++, real:true, oaId:w.id, status:'pass',
     title: w.title || w.display_name || '—', authors: formatAuthors(w.authorships), journal, year: w.publication_year || '',
-    doi, type: TYPE_MAP[w.type] || 'ty_other', rawType:w.type, n:{key:'cited_n', n:w.cited_by_count||0},
+    doi, lang: w.language || '', type: TYPE_MAP[w.type] || 'ty_other', rawType:w.type, n:{key:'cited_n', n:w.cited_by_count||0},
     abstract: invertedToText(w.abstract_inverted_index), refIds:(w.referenced_works||[]).map(x=>x.replace('https://openalex.org/','')).slice(0,50),
     refCount: w.referenced_works_count||0, authorIds, scores:[5,5,5,5,5], refs:{total:w.referenced_works_count||0, peer:0, median:'–', bad:0, primary:'–', self:'–'}
   };
@@ -608,7 +639,7 @@ async function enrichRefs(p){
     scoreFromRefs(p, d.results||[]);
   }catch(e){ /* Netzfehler: neutrale Bewertung bleibt */ }
 }
-const WORK_FIELDS = 'id,doi,title,display_name,publication_year,type,is_retracted,cited_by_count,referenced_works_count,referenced_works,authorships,primary_location,biblio,abstract_inverted_index';
+const WORK_FIELDS = 'id,doi,title,display_name,publication_year,type,is_retracted,cited_by_count,referenced_works_count,referenced_works,authorships,primary_location,biblio,abstract_inverted_index,language';
 // Vorauswahl aus 50 Kandidaten: die passendsten mit Quellenverzeichnis zuerst (max. 10),
 // dann bis 14 mit den nächstbesten auffüllen, Reihenfolge nach Passung bleibt erhalten.
 function pickCandidates(works){
@@ -617,19 +648,74 @@ function pickCandidates(works){
   const chosen = new Set([...withRefs, ...rest]);
   return works.filter(w=>chosen.has(w));
 }
-async function searchReal(q){
+/* Boolesche Suche: erkennt AND/OR/NOT (auch UND/ODER/NICHT, im Spanischen Y/O/NO),
+   && || & |, "Phrasen", (Klammern), -Wort / !Wort zum Ausschließen, +Wort, * und ? als Platzhalter.
+   Gibt null zurück, wenn der Text keine Such-Syntax enthält (dann: Suche nach Bedeutung). */
+const BOOL_OPS = {AND:'AND', OR:'OR', NOT:'NOT', UND:'AND', ODER:'OR', NICHT:'NOT'};
+const BOOL_OPS_ES = {Y:'AND', O:'OR', NO:'NOT'};
+function parseBoolean(q){
+  let isBool = false;
+  let s = q.replace(/[„“”«»]/g, '"');
+  s = s.replace(/(^|[\s(])[-!](?=["(\p{L}\p{N}])/gu, (m, a)=>{ isBool = true; return a+'NOT '; });
+  s = s.replace(/(^|[\s(])\+(?=["(\p{L}\p{N}])/gu, (m, a)=>{ isBool = true; return a; });
+  const tokens = s.match(/"[^"]*"|\(|\)|&&|\|\||&|\||[^\s()"&|]+/g) || [];
+  const out = [];
+  for(const tk of tokens){
+    if(tk[0]==='"'){ if(tk.replace(/"/g,'').trim()){ out.push('"'+tk.replace(/"/g,'').trim()+'"'); isBool = true; } continue; }
+    if(tk==='(' || tk===')'){ out.push(tk); isBool = true; continue; }
+    if(tk==='&&' || tk==='&'){ out.push('AND'); isBool = true; continue; }
+    if(tk==='||' || tk==='|'){ out.push('OR'); isBool = true; continue; }
+    const op = BOOL_OPS[tk] || (L==='es' ? BOOL_OPS_ES[tk] : null);
+    if(op){ out.push(op); isBool = true; continue; }
+    const w = tk.replace(/[.,;:!]+$/,'').replace(/\?$/,'');
+    if(!w) continue;
+    if(/[\p{L}\p{N}]\*|\*[\p{L}\p{N}]|[\p{L}\p{N}]\?[\p{L}\p{N}]/u.test(w)) isBool = true;
+    out.push(w);
+  }
+  if(!isBool) return null;
+  const BIN = new Set(['AND','OR']), clean = [];
+  for(const tk of out){
+    const prev = clean[clean.length-1];
+    if(BIN.has(tk) && (!prev || BIN.has(prev) || prev==='NOT' || prev==='(')) continue;
+    if(tk==='NOT' && prev==='NOT') continue;
+    if(tk===')' && (BIN.has(prev) || prev==='NOT')) clean.pop();
+    clean.push(tk);
+  }
+  while(clean.length && (BIN.has(clean[clean.length-1]) || clean[clean.length-1]==='NOT' || clean[clean.length-1]==='(')) clean.pop();
+  let depth = 0; const bal = [];
+  for(const tk of clean){ if(tk==='('){ depth++; bal.push(tk); } else if(tk===')'){ if(depth>0){ depth--; bal.push(tk); } } else bal.push(tk); }
+  while(depth-- > 0) bal.push(')');
+  const expr = bal.join(' ').replace(/\( /g,'(').replace(/ \)/g,')').trim();
+  if(!expr.replace(/\b(AND|OR|NOT)\b|[()]/g,'').trim()) return null;
+  return {expr, wildcard: /[*?]/.test(expr.replace(/"[^"]*"/g,''))};
+}
+function langList(codes){
+  const names = codes.map(c=>t('ln_'+c));
+  return names.length<2 ? (names[0]||'') : names.slice(0,-1).join(', ')+' '+t('and_word')+' '+names[names.length-1];
+}
+// Sucht Papers in den angegebenen Sprachen. excludeIds: bereits gefundene Papers (für die erweiterte Suche).
+async function searchReal(q, langs, excludeIds, boolExpr){
   const terms = extractTerms(q);
-  let works = [];
-  // Suche nach der Bedeutung des ganzen Satzes (semantische Suche, versteht jede Sprache)
-  const semUrl = OA+'?search.semantic='+encodeURIComponent(q.slice(0,500))+'&filter=has_abstract:true&per-page=50&select='+WORK_FIELDS;
-  for(let attempt=0; attempt<2 && !works.length; attempt++){
-    try{ works = (await oaFetch(semUrl)).results || []; }
-    catch(e){ if(attempt===0) await new Promise(r=>setTimeout(r,1500)); }
+  const filt = '&filter=has_abstract:true,language:'+langs.join('|')+'&per-page=50&select='+WORK_FIELDS;
+  const keep = w => !excludeIds || !excludeIds.has(w.id);
+  const tryFetch = async url => {
+    for(let a=0; a<2; a++){
+      try{ return ((await oaFetch(url)).results || []).filter(keep); }
+      catch(e){ if(a===0) await new Promise(r=>setTimeout(r,1500)); }
+    }
+    return null;
+  };
+  let works = null;
+  // 1) Mit Operatoren (AND, OR, NOT, "…", *): Stichwortsuche, bei Platzhaltern die exakte Suche
+  if(boolExpr) works = await tryFetch(OA+'?'+(boolExpr.wildcard?'search.exact':'search')+'='+encodeURIComponent(boolExpr.expr)+filt);
+  // 2) Sonst: Suche nach der Bedeutung des ganzen Satzes
+  if(works===null) works = await tryFetch(OA+'?search.semantic='+encodeURIComponent(q.slice(0,500))+filt);
+  // 3) Rückfall, z. B. wenn das kostenlose Tagesbudget aufgebraucht ist: Suche nach Wörtern
+  if(works===null || (!works.length && !boolExpr)){
+    const kw = await tryFetch(OA+'?search='+encodeURIComponent(terms.join(' '))+filt);
+    if(kw) works = kw;
   }
-  if(!works.length){
-    // Rückfall, z. B. wenn das kostenlose Tagesbudget aufgebraucht ist: Suche nach Wörtern
-    works = (await oaFetch(OA+'?search='+encodeURIComponent(terms.join(' '))+'&per-page=50&select='+WORK_FIELDS)).results || [];
-  }
+  if(works===null) throw new Error('offline');
   return {terms, papers:pickCandidates(works).map(fromWork)};
 }
 
@@ -652,7 +738,7 @@ function reasonLong(x){ const r = x.reasonLong; return (r && r.key) ? t(r.key, r
 function titleOf(p){ return tx(p.title); }
 
 const STEP_DEFS = [
-  {t:'s1', d:p=>p? t('s1_d',{t:tx(p.terms).join(', ')}) : t('s1_wait')},
+  {t:'s1', d:p=>p? (p.boolExpr ? t('s1_bool') : t('s1_d')) : t('s1_wait')},
   {t:'s2', d:p=>p? t('s2_d',{n:found(p)}) : t('s2_idle'), act:'s2_act', go:()=>openPreselect('all')},
   {t:'s3', d:p=>p? t('s3_d',{n:rejected(p).length}) : t('s3_idle'), act:'s3_act', go:()=>openPreselect('rej')},
   {t:'s4', d:p=>p? t('s4_d',{n:passed(p).length}) : t('s4_idle'), act:'s4_act', go:()=>show('results')},
@@ -664,6 +750,7 @@ const STEP_DEFS = [
    ========================================================= */
 function applyStatic(){
   document.documentElement.lang = L;
+  document.title = t('doc_title');
   document.querySelectorAll('[data-i18n]').forEach(el=>{ el.innerHTML = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
   document.querySelectorAll('[data-flag]').forEach(el=>{ el.innerHTML = FLAGS[el.dataset.flag]; });
@@ -685,8 +772,16 @@ function setLang(l){
   if(active==='running' && current) renderLog(current, shownLines);
   renderSide();
 }
-function toggleLangMenu(e){ e.stopPropagation(); document.getElementById('langMenu').classList.toggle('open'); }
-function closeLangMenu(){ document.getElementById('langMenu').classList.remove('open'); }
+function toggleLangMenu(e){ e.stopPropagation(); document.getElementById('langWrap').classList.toggle('open'); }
+function closeLangMenu(){ document.getElementById('langWrap').classList.remove('open'); }
+// Sprachmenü sitzt oben rechts: am Desktop in der Leiste neben "Prozess", am Handy in der Kopfzeile
+const mqMobile = window.matchMedia('(max-width:899px)');
+function placeLang(){
+  const w = document.getElementById('langWrap');
+  const slot = document.getElementById(mqMobile.matches ? 'langSlotTop' : 'langSlotSide');
+  if(w.parentNode !== slot) slot.appendChild(w);
+}
+if(mqMobile.addEventListener) mqMobile.addEventListener('change', placeLang); else mqMobile.addListener(placeLang);
 document.addEventListener('click', e=>{ if(!e.target.closest('#langWrap')) closeLangMenu(); });
 
 /* =========================================================
@@ -733,7 +828,8 @@ async function startSearch(){
   if(!q){ toast(t('t_topic')); qEl.focus(); return; }
   if(running) return;
   const terms = extractTerms(q);
-  const proj = {id:'n'+Date.now(), date:'today', query:q, title:terms.slice(0,3).map(w=>w[0].toUpperCase()+w.slice(1)).join(' · ') || q.slice(0,30), terms, papers:[], live:true, offline:false};
+  const boolExpr = parseBoolean(q);
+  const proj = {id:'n'+Date.now(), date:'today', query:q, title:terms.slice(0,3).map(w=>w[0].toUpperCase()+w.slice(1)).join(' · ') || q.slice(0,30), terms, papers:[], live:true, offline:false, lang:L, boolExpr};
   projects = [proj, ...projects];
   current = proj; history = []; runProgress = 0; running = true; shownLines = 0;
   document.getElementById('liveDot').classList.add('busy');
@@ -743,17 +839,12 @@ async function startSearch(){
   await step(1, 1, 500);          // Thema verstanden
   await step(2, 1, 300);          // Suche läuft
   try{
-    const res = await searchReal(q);
+    const res = await searchReal(q, [proj.lang], null, boolExpr);
     proj.papers = res.papers;
-    if(!proj.papers.length){ proj.offline = false; proj.none = true; }
   }catch(e){
     const base = demoFor(q);
     proj.papers = base.papers.map(x=>Object.assign({}, x));
     proj.terms = tx(base.terms); proj.title = tx(base.title); proj.live = false; proj.offline = true;
-  }
-  if(proj.none){
-    running = false; document.getElementById('liveDot').classList.remove('busy');
-    toast(t('l_none')); projects = projects.filter(p=>p!==proj); current = null; show('start', false); return;
   }
   await step(3, 2, 600);          // gefunden
   await step(4, 2, 300);          // Prüfung läuft
@@ -771,15 +862,52 @@ async function startSearch(){
   show('results', false);
 }
 
+// Erweiterte Suche: sucht zusätzlich in den anderen Sprachen und hängt neue Papers an die bisherigen an
+async function extendSearch(){
+  const p = current;
+  if(running || !p || !p.live || p.extended) return;
+  p.extLangs = ['en','de','es'].filter(l=>l!==(p.lang||'en'));
+  p.addedCount = 0; p.extending = true;
+  running = true; runProgress = 0; shownLines = 0; history = [];
+  document.getElementById('liveDot').classList.add('busy');
+  show('running', false);
+  const step = async (lines, progress, minMs)=>{ shownLines = lines; runProgress = progress; renderLog(p, shownLines); renderSide(); await wait(minMs); };
+  await step(1, 1, 500);
+  await step(2, 1, 300);
+  let added;
+  try{
+    added = (await searchReal(tx(p.query), p.extLangs, new Set(p.papers.map(x=>x.oaId)), p.boolExpr)).papers;
+  }catch(e){
+    running = false; p.extending = false;
+    document.getElementById('liveDot').classList.remove('busy');
+    toast(t('t_ext_fail')); renderResults(); show('results', false); return;
+  }
+  added.forEach(x=>{ x.ext = true; });
+  p.papers = p.papers.concat(added); p.addedCount = added.length;
+  await step(3, 2, 600);
+  await step(4, 2, 300);
+  const queue = added.filter(x=>x.status==='pass');
+  let i = 0;
+  await Promise.all([0,1,2,3].map(async ()=>{ while(i<queue.length){ const x = queue[i++]; await enrichRefs(x); } }));
+  await step(5, 3, 600);
+  await step(6, 4, 700);
+  await step(7, 5, 500);
+  running = false; p.extending = false; p.extended = true;
+  document.getElementById('liveDot').classList.remove('busy');
+  renderResults();
+  show('results', false);
+}
+
 function logLines(p){
+  const langs = langList(p.extending ? p.extLangs : [p.lang || L]);
   const lines = [
-    ['🧠', t('l0',{t:tx(p.terms).join(', ')})],
-    ['🔎', t('l1')],
-    ['📚', t('l2',{n:found(p)})],
+    ['🧠', p.extending ? t('ext_l0',{langs}) : (p.boolExpr ? t('bool_l0',{e:esc(p.boolExpr.expr)}) : t('l0'))],
+    ['🔎', t('l1',{lang:langs})],
+    ['📚', p.extending ? t('ext_l2',{n:p.addedCount||0}) : t('l2',{n:found(p)})],
     ['🕵️', t('l3')],
     ['🚫', t('l4',{n:rejected(p).length, r:[...new Set(rejected(p).map(r=>t(r.reason).toLowerCase()))].join(', ') || '–'})],
     ['⚖️', t('l5',{n:passed(p).length})],
-    ['✅', t('l6',{b:passed(p).length?total(passed(p)[0]):0, a:fmt(avg(p))})]
+    ['✅', passed(p).length ? t('l6',{b:total(passed(p)[0]), a:fmt(avg(p))}) : t('l6_none',{lang:langs})]
   ];
   if(p.offline) lines.splice(2, 0, ['⚠️', t('l_offline')]);
   return lines;
@@ -803,13 +931,17 @@ function renderResults(){
     <div class="st"><div class="n">${found(p)}</div><div class="l">${t('found')}</div></div>
     <div class="st"><div class="n" style="color:var(--bad)">${rejected(p).length}</div><div class="l">${t('rejected')}</div></div>
     <div class="st"><div class="n" style="color:var(--good)">${passed(p).length}</div><div class="l">${t('rated')}</div></div>`;
-  document.getElementById('resList').innerHTML = passed(p).map(x=>`
+  const others = ['en','de','es'].filter(l=>l!==(p.lang||'en'));
+  document.getElementById('resExt').innerHTML = !p.live ? '' : (p.extended
+    ? `<p class="small muted ext-note">${t('ext_done',{n:p.addedCount||0, langs:langList(p.extLangs||others)})}</p>`
+    : `<button class="btn ext" onclick="extendSearch()">${t('ext_btn')}</button><p class="small muted ext-note">${t('ext_hint',{langs:langList(others)})}</p>`);
+  document.getElementById('resList').innerHTML = (!passed(p).length ? `<div class="card soft"><div class="small muted">${t('res_empty',{lang:langList([p.lang||L])})}</div></div>` : '') + passed(p).map(x=>`
     <div class="card row" onclick="openPaper(${x.id})">
       ${badge(total(x))}
       <div class="body">
         <p class="title">${esc(x.title)}</p>
         <p class="meta">${esc(x.authors)} · ${x.year} · ${esc(x.journal.split(',')[0])}</p>
-        <p class="why"><span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> <span class="muted small">${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</span></p>
+        <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> <span class="muted small">${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</span></p>
       </div>
       <div class="arrow">›</div>
     </div>`).join('');
@@ -872,7 +1004,7 @@ function renderPreselect(){
       <div class="body">
         <p class="title">${esc(x.title)}</p>
         <p class="meta">${esc(x.authors)} · ${x.year} · ${esc(x.journal.split(',')[0])}</p>
-        <p class="why">${rej ? `<span class="pill bad">${t(x.reason)}</span> <span class="muted small">${esc(reasonLong(x).split('. ')[0])}.</span>` : `<span class="pill good">${t('passed')}</span> <span class="muted small">${t('rated_with',{n:total(x)})}</span>`}</p>
+        <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}${rej ? `<span class="pill bad">${t(x.reason)}</span> <span class="muted small">${esc(reasonLong(x).split('. ')[0])}.</span>` : `<span class="pill good">${t('passed')}</span> <span class="muted small">${t('rated_with',{n:total(x)})}</span>`}</p>
       </div>
       <div class="arrow">›</div>
     </div>`;
@@ -919,6 +1051,7 @@ function toast(msg){
   el.textContent = msg; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove('show'), 1800);
 }
+placeLang();
 applyStatic();
 renderSide();
 </script>
