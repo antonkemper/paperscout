@@ -122,6 +122,10 @@
   .outrow:last-child{border-bottom:0}
   .outrow .ot{font-size:14px;font-weight:600;margin:0 0 3px}
   .outlist{border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;background:var(--card);margin-top:-6px;padding-top:6px}
+  .acc{display:inline-block;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:600}
+  .acc.free{background:var(--good-soft);color:var(--good-ink)}
+  .acc.closed{background:var(--warn-soft);color:var(--warn-ink)}
+  .acc.unk{background:var(--soft2);color:var(--muted)}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -771,6 +775,9 @@ Object.assign(STR.es, {
   out_h:'Descartados ({n}) – con motivo', r_lowscore:'Puntuación inferior a 5', res_h:'Papers recomendados'
 });
 
+Object.assign(STR.de, {oa_free:'Frei zugänglich', oa_closed:'Login/Paywall möglich', oa_unknown:'Zugang unbekannt', oa_open:'Frei zugängliche Version öffnen ↗', acc_l:'Zugang:'});
+Object.assign(STR.en, {oa_free:'Open access', oa_closed:'Login/paywall possible', oa_unknown:'Access unknown', oa_open:'Open free version ↗', acc_l:'Access:'});
+Object.assign(STR.es, {oa_free:'Acceso abierto', oa_closed:'Posible login/muro de pago', oa_unknown:'Acceso desconocido', oa_open:'Abrir la versión gratuita ↗', acc_l:'Acceso:'});
 STR.zh = STR.zh || {};   // vorbereitet für Chinesisch
 Object.assign(STR.de, {ln_zh:'Chinesisch'}); Object.assign(STR.en, {ln_zh:'Chinese'}); Object.assign(STR.es, {ln_zh:'chino'});
 // Standardsprache: gespeicherte Wahl, sonst Browsersprache, sonst Englisch
@@ -1181,6 +1188,7 @@ function fromWork(w){
   const p = {
     id: nextId++, real:true, oaId:w.id, status:'pass', source,
     biblio:{volume:b.volume||'', issue:b.issue||'', first:b.first_page||'', last:b.last_page||''},
+    oa: w.open_access ? {is:!!w.open_access.is_oa, status:w.open_access.oa_status||'', url:(w.best_oa_location && (w.best_oa_location.landing_page_url || w.best_oa_location.pdf_url)) || w.open_access.oa_url || ''} : null,
     authorList:(w.authorships||[]).map(a=>a.author && a.author.display_name).filter(Boolean).slice(0,25),
     title: w.title || w.display_name || '—', authors: formatAuthors(w.authorships), journal, year: w.publication_year || '',
     doi, lang: w.language || '', type: TYPE_MAP[w.type] || 'ty_other', rawType:w.type, n:{key:'cited_n', n:w.cited_by_count||0},
@@ -1256,6 +1264,19 @@ function sjrFor(x){
   return null;
 }
 function countryName(code){ try{ return code ? new Intl.DisplayNames([L], {type:'region'}).of(code) : ''; }catch(e){ return code||''; } }
+/* Punkt 11: Zugangs-Badge und bevorzugter Link (freie Version, sonst doi.org) */
+function accBadge(x){
+  if(!x.real) return '';
+  const o = x.oa;
+  return !o ? `<span class="acc unk">${t('oa_unknown')}</span>` : o.is ? `<span class="acc free">${t('oa_free')}</span>` : `<span class="acc closed">${t('oa_closed')}</span>`;
+}
+function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return ''; } }
+function paperLink(x){
+  if(!x.real) return null;
+  if(x.oa && x.oa.is && x.oa.url){ const h = hostOf(x.oa.url); return {href:x.oa.url, domain:(h==='doi.org' && x.doiTarget) ? x.doiTarget : h, kind:'oa'}; }
+  if(x.doi && x.doiStatus!=='bad') return {href:'https://doi.org/'+x.doi, domain:x.doiTarget || 'doi.org', kind:'doi'};
+  return null;
+}
 function journalLine(x){
   const s = x.source;
   const parts = [s && s.name ? s.name : x.journal.split(',')[0], s && s.publisher ? s.publisher : (x.real ? t('j_publisher_unknown') : ''), x.year, s && s.country ? countryName(s.country) : ''].filter(Boolean);
@@ -1266,7 +1287,7 @@ function rankChips(x){
   const q = sjrFor(x), v = vhbFor(x);
   const sjr = SJR===null ? `<span class="rk none">${t('rank_sjr_missing')}</span>` : q ? `<span class="rk">${t('rank_sjr',{q})}</span>` : `<span class="rk none">${t('rank_none_sjr')}</span>`;
   const vhb = v ? `<span class="rk">${t('rank_vhb',{r:v.r})}</span>` : `<span class="rk none">${t('rank_none_vhb')}</span>`;
-  return `<div class="ranks"><span class="rk-l">${t('rank_l')}</span>${sjr}${vhb}</div>`;
+  return `<div class="ranks"><span class="rk-l">${t('rank_l')}</span>${sjr}${vhb}<span class="rk-l" style="margin-left:6px">${t('acc_l')}</span>${accBadge(x)}</div>`;
 }
 async function enrichSources(papers){
   const ids = [...new Set(papers.map(p=>p.source && p.source.id).filter(Boolean).map(id=>id.replace('https://openalex.org/','')))];
@@ -1285,7 +1306,7 @@ async function enrichRefs(p){
     scoreFromRefs(p, d.results||[]);
   }catch(e){ /* Netzfehler: neutrale Bewertung bleibt */ }
 }
-const WORK_FIELDS = 'id,doi,title,display_name,publication_year,type,is_retracted,cited_by_count,referenced_works_count,referenced_works,authorships,primary_location,biblio,abstract_inverted_index,language';
+const WORK_FIELDS = 'id,doi,title,display_name,publication_year,type,is_retracted,cited_by_count,referenced_works_count,referenced_works,authorships,primary_location,biblio,abstract_inverted_index,language,open_access,best_oa_location';
 // Vorauswahl aus 50 Kandidaten: die passendsten mit Quellenverzeichnis zuerst (max. 10),
 // dann bis 14 mit den nächstbesten auffüllen, Reihenfolge nach Passung bleibt erhalten.
 function pickCandidates(works){
@@ -1837,12 +1858,14 @@ function renderPaper(x){
   document.getElementById('pJournal').textContent = x.journal + ' · ' + x.year;
   document.getElementById('pBadges').innerHTML = rej
     ? `<span class="pill bad">${t(x.reason)}</span>`
-    : `<span class="pill good">${label(total(x))}</span><span class="pill neutral">${t(x.type)}</span><span class="pill neutral">${nText(x.n)}</span>`;
+    : `<span class="pill good">${label(total(x))}</span><span class="pill neutral">${t(x.type)}</span><span class="pill neutral">${nText(x.n)}</span>${accBadge(x)}`;
   document.getElementById('pWatch').innerHTML = watchBtn(x);
   const a = document.getElementById('pDoi');
   a.textContent = x.doi ? t('open_orig',{doi:x.doi}) + (x.doiTarget ? ' · '+t('doi_target',{d:x.doiTarget}) : '') : t('no_doi');
-  if(x.doiStatus==='bad'){ a.textContent = t('r_doi')+': '+x.doi; a.removeAttribute('href'); a.onclick = ()=>false; }
-  else if(x.real && x.doi){ a.href = 'https://doi.org/'+x.doi; a.onclick = null; }
+  const lk = paperLink(x);
+  if(x.doiStatus==='bad' && !lk){ a.textContent = t('r_doi')+': '+x.doi; a.removeAttribute('href'); a.onclick = ()=>false; }
+  else if(lk && lk.kind==='oa'){ a.textContent = t('oa_open')+' · '+lk.domain; a.href = lk.href; a.onclick = null; }
+  else if(lk){ a.href = lk.href; a.onclick = null; }
   else { a.href = '#'; a.onclick = ()=>{ toast(t('t_open')); return false; }; }
   document.getElementById('pRejected').innerHTML = rej ? `<div class="alert" style="margin-bottom:12px"><b>${t('why_out')}${t(x.reason)}</b>${esc(reasonLong(x))}<div style="margin-top:8px" class="small">${t('no_rating')}</div></div>` : '';
   document.getElementById('pRatedBlock').style.display = rej ? 'none' : 'block';
