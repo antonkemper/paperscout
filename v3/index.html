@@ -68,6 +68,13 @@
   .mode.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
   textarea.tall{min-height:190px;font-size:15px}
   .src-line{font-size:13px;color:var(--muted);margin:6px 0 0;word-break:break-word}
+  .terms{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
+  .term{background:var(--brand-soft);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600}
+  .linkbtn{border:0;background:none;color:var(--brand);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:2px 4px}
+  .terms-edit{display:none;gap:8px;margin:0 0 12px}
+  .terms-edit.open{display:flex}
+  .terms-edit input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:14px;background:var(--card);color:var(--ink)}
+  .terms-edit .btn{width:auto;padding:9px 14px;font-size:14px}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -220,7 +227,8 @@
       <!-- ===== SCREEN 3: ERGEBNIS ===== -->
       <section id="results" class="screen">
         <p class="muted" style="margin:4px 0 2px" data-i18n="res_topic"></p>
-        <p style="font-size:17px;font-weight:600;margin:0 0 12px" id="resQuery"></p>
+        <p style="font-size:17px;font-weight:600;margin:0 0 8px" id="resQuery"></p>
+        <div id="resTerms"></div>
         <div class="summary" id="resSummary"></div>
         <h2 id="resH"></h2>
         <div class="card soft" style="padding:10px 12px"><div class="small muted" id="resNote"></div></div>
@@ -531,6 +539,29 @@ Object.assign(STR.es, {
   chk_via_doi:'encontrado por DOI', chk_via_title:'encontrado por título'
 });
 
+Object.assign(STR.de, {
+  s1_terms:'Gesucht nach: {t}', l0_terms:'Thema verstanden. Suchbegriffe: <b>{t}</b>{tr}', tr_from:' · aus dem Deutschen übersetzt|aus dem Englischen übersetzt|aus dem Spanischen übersetzt',
+  res_terms_l:'Gesucht nach:', res_terms_edit:'Begriffe anpassen', res_terms_go:'Neu suchen', res_terms_ph:'Begriffe, durch Komma getrennt',
+  res_relaxed:'Mit allen Begriffen gab es keine Treffer. Ich habe automatisch mit weniger Begriffen erneut gesucht: {t}.',
+  res_tr_note:'Deine Eingabe wurde für die Suche zusätzlich ins Englische übersetzt, weil die meisten Papers englisch sind (Übersetzung: MyMemory).',
+  t_terms_empty:'Gib mindestens einen Begriff ein'
+});
+Object.assign(STR.en, {
+  s1_terms:'Searched for: {t}', l0_terms:'Topic understood. Search terms: <b>{t}</b>{tr}', tr_from:' · translated from German| · translated from English| · translated from Spanish',
+  res_terms_l:'Searched for:', res_terms_edit:'Adjust terms', res_terms_go:'Search again', res_terms_ph:'Terms, separated by commas',
+  res_relaxed:'There were no results with all terms. I automatically searched again with fewer terms: {t}.',
+  res_tr_note:'Your input was also translated into English for the search, because most papers are in English (translation: MyMemory).',
+  t_terms_empty:'Enter at least one term'
+});
+Object.assign(STR.es, {
+  s1_terms:'Buscado: {t}', l0_terms:'Tema entendido. Términos de búsqueda: <b>{t}</b>{tr}', tr_from:' · traducido del alemán| · traducido del inglés| · traducido del español',
+  res_terms_l:'Buscado:', res_terms_edit:'Ajustar términos', res_terms_go:'Buscar de nuevo', res_terms_ph:'Términos, separados por comas',
+  res_relaxed:'No hubo resultados con todos los términos. He vuelto a buscar automáticamente con menos términos: {t}.',
+  res_tr_note:'Tu entrada también se tradujo al inglés para la búsqueda, porque la mayoría de los papers están en inglés (traducción: MyMemory).',
+  t_terms_empty:'Introduce al menos un término'
+});
+STR.de.tr_from = ' · aus dem {lang} übersetzt'; STR.en.tr_from = ' · translated from {lang}'; STR.es.tr_from = ' · traducido del {lang}';
+
 let L = 'en';
 try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
 function t(key, vars){ let s = (STR[L][key] !== undefined ? STR[L][key] : STR.de[key]) || key; if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
@@ -625,6 +656,53 @@ function extractTerms(q){
   for(const w of words){ if(!seen.has(w)){ seen.add(w); out.push(w); } if(out.length>=7) break; }
   return out.length ? out : q.split(/\s+/).slice(0,5);
 }
+/* Punkt 2: Kernbegriffe aus ganzen Sätzen, Sprache erkennen, ins Englische übersetzen */
+const STOP2 = new Set(('affect affects affected affecting change changes changing improve improves increase increases reduce reduces impact influence ability abilities capacity level levels use usage way ways people role relationship relation study studies research analysis review effect effects among between using based toward towards within during into also their they them have has had was were been being this that these those with from more most such some other than then very will would could should can may might about over under after before because while where when which who whom whose what how why need want looking find search recent current new latest articles article thesis dissertation write writing bachelor bachelors master term seminar topic work works empirical evidence regarding concerning '+
+  'auswirkungen auswirkung rolle zusammenhang zwischen bei durch unter nach vor bezug hinblick bereich neue neuesten aktuellen aktuell möchte will suche suchen finden meiner einer eines dem des sich auch als wird werden wurde hat haben kann können sowie bzw schreibe schreiben empirische '+
+  'impacto influencia papel relación entre sobre para como cómo estudio estudios trabajo escribiendo escribo necesito busco reciente recientes tesis tfg tfm efecto efectos del las los una unos unas que qué por con sin sus mis acerca').split(' '));
+function isStopWord(w){ return w.length < 3 || STOP.has(w) || STOP2.has(w); }
+// Zusammenhängende Inhaltswörter mit zwei Wörtern bleiben als Begriff zusammen ("social media")
+function extractKeywords(text){
+  const words = String(text||'').toLowerCase().replace(/[’']s\b/g,'').replace(/[^\p{L}\p{N}\s-]/gu,' ').split(/\s+/).filter(Boolean);
+  const out = []; let run = [];
+  const flush = ()=>{ if(run.length===2) out.push(run.join(' ')); else run.forEach(w=>out.push(w)); run = []; };
+  for(const w of words){ if(isStopWord(w)) flush(); else run.push(w); }
+  flush();
+  return [...new Set(out)].slice(0,6);
+}
+const LANG_HINTS = {
+  de:'der die das und ist ich über von mit für auf eine einer den dem nicht wie zu im bei auch meine'.split(' '),
+  en:'the and of is to in for on with how what does do are this that my about from'.split(' '),
+  es:'el la los las y del que en para por con una un sobre cómo como es mi estoy'.split(' ')
+};
+function detectLang(text){
+  const w = ' '+String(text).toLowerCase().replace(/[^\p{L}\s]/gu,' ').replace(/\s+/g,' ')+' ';
+  const sc = {}; for(const l in LANG_HINTS) sc[l] = LANG_HINTS[l].filter(x=>w.includes(' '+x+' ')).length;
+  const best = Object.keys(sc).sort((a,b)=>sc[b]-sc[a])[0];
+  return sc[best] ? best : L;
+}
+function decodeEntities(s){ const ta = document.createElement('textarea'); ta.innerHTML = s; return ta.value; }
+// Kostenlose Übersetzung über MyMemory; liefert null, wenn nicht erreichbar oder Tageskontingent aufgebraucht
+async function translate(text, from, to){
+  if(!text || from===to) return text;
+  try{
+    const r = await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(String(text).slice(0,480))+'&langpair='+from+'|'+to);
+    const d = await r.json();
+    const out = d && d.responseData && d.responseData.translatedText;
+    if(!out || d.quotaFinished || String(d.responseStatus)!=='200' || /MYMEMORY WARNING|QUERY LENGTH LIMIT|INVALID LANGUAGE/i.test(out)) return null;
+    return decodeEntities(out);
+  }catch(e){ return null; }
+}
+async function understandQuery(q){
+  const lang = detectLang(q);
+  const origTerms = extractKeywords(q);
+  let en = null, enTerms = [];
+  if(lang==='en'){ en = q; enTerms = origTerms; }
+  else { en = await translate(q, lang, 'en'); if(en) enTerms = extractKeywords(en); }
+  return {lang, origTerms, en, enTerms, translated: lang!=='en' && !!en};
+}
+function shownTerms(p){ const i = p.info||{}; return (i.custom || (i.enTerms && i.enTerms.length ? i.enTerms : i.origTerms) || []); }
+
 async function oaFetch(url){
   const r = await fetch(url, {headers:{'Accept':'application/json'}});
   if(!r.ok) throw new Error('HTTP '+r.status);
@@ -757,8 +835,8 @@ function langList(codes){
   return names.length<2 ? (names[0]||'') : names.slice(0,-1).join(', ')+' '+t('and_word')+' '+names[names.length-1];
 }
 // Sucht Papers in den angegebenen Sprachen. excludeIds: bereits gefundene Papers (für die erweiterte Suche).
-async function searchReal(q, langs, excludeIds, boolExpr){
-  const terms = extractTerms(q);
+async function searchReal(q, langs, excludeIds, boolExpr, info){
+  const terms = (info && (info.custom || (info.enTerms.length ? info.enTerms : info.origTerms))) || extractTerms(q);
   const filt = '&filter=has_abstract:true,language:'+langs.join('|')+'&per-page=50&select='+WORK_FIELDS;
   const keep = w => !excludeIds || !excludeIds.has(w.id);
   const tryFetch = async url => {
@@ -771,12 +849,23 @@ async function searchReal(q, langs, excludeIds, boolExpr){
   let works = null;
   // 1) Mit Operatoren (AND, OR, NOT, "…", *): Stichwortsuche, bei Platzhaltern die exakte Suche
   if(boolExpr) works = await tryFetch(OA+'?'+(boolExpr.wildcard?'search.exact':'search')+'='+encodeURIComponent(boolExpr.expr)+filt);
-  // 2) Sonst: Suche nach der Bedeutung des ganzen Satzes
-  if(works===null) works = await tryFetch(OA+'?search.semantic='+encodeURIComponent(q.slice(0,500))+filt);
-  // 3) Rückfall, z. B. wenn das kostenlose Tagesbudget aufgebraucht ist: Suche nach Wörtern
-  if(works===null || (!works.length && !boolExpr)){
-    const kw = await tryFetch(OA+'?search='+encodeURIComponent(terms.join(' '))+filt);
-    if(kw) works = kw;
+  // 2) Sonst: Suche nach der Bedeutung des ganzen Satzes, ergänzt um die (englischen) Kernbegriffe
+  if(works===null && !boolExpr){
+    const sem = (info && info.custom) ? [] : await tryFetch(OA+'?search.semantic='+encodeURIComponent(q.slice(0,500))+filt);
+    const kw = terms.length ? await tryFetch(OA+'?search='+encodeURIComponent(terms.join(' '))+filt) : [];
+    if(sem!==null || kw!==null){
+      const seen = new Set(); works = [];
+      for(const w of [...(sem||[]), ...(kw||[])]) if(!seen.has(w.id)){ seen.add(w.id); works.push(w); }
+    }
+  }
+  // 3) Keine Treffer: automatisch mit weniger Begriffen erneut suchen
+  if(works!==null && !works.length && !boolExpr && terms.length > 1){
+    for(const n of [Math.min(3, terms.length-1), 2, 1]){
+      if(n >= terms.length || n < 1) continue;
+      const fewer = terms.slice(0, n);
+      const r = await tryFetch(OA+'?search='+encodeURIComponent(fewer.join(' '))+filt);
+      if(r && r.length){ works = r; if(info) info.relaxed = fewer; break; }
+    }
   }
   if(works===null) throw new Error('offline');
   return {terms, papers:pickCandidates(works).map(fromWork)};
@@ -801,7 +890,7 @@ function reasonLong(x){ const r = x.reasonLong; return (r && r.key) ? t(r.key, r
 function titleOf(p){ return (p.title && p.title.key) ? t(p.title.key, p.title.vars) : tx(p.title); }
 
 const STEP_DEFS = [
-  {t:'s1', d:p=>p? (p.mode==='check' ? t('s1_check',{n:p.lines.length}) : p.boolExpr ? t('s1_bool') : t('s1_d')) : t('s1_wait')},
+  {t:'s1', d:p=>p? (p.mode==='check' ? t('s1_check',{n:p.lines.length}) : p.boolExpr ? t('s1_bool') : p.info ? t('s1_terms',{t:shownTerms(p).join(', ')}) : t('s1_d')) : t('s1_wait')},
   {t:'s2', d:p=>p? (p.mode==='check' ? t('s2_check',{f:checkFound(p),n:p.lines.length}) : t('s2_d',{n:found(p)})) : t('s2_idle'), act:'s2_act', go:()=>openPreselect('all')},
   {t:'s3', d:p=>p? t('s3_d',{n:rejected(p).length}) : t('s3_idle'), act:'s3_act', go:()=>openPreselect('rej')},
   {t:'s4', d:p=>p? t('s4_d',{n:passed(p).length}) : t('s4_idle'), act:'s4_act', go:()=>show('results')},
@@ -890,8 +979,13 @@ async function startSearch(){
   const q = qEl.value.trim();
   if(!q){ toast(t('t_topic')); qEl.focus(); return; }
   if(running) return;
+  return runSearch(q, null);
+}
+// Startet eine Suche; customTerms: vom Nutzer angepasste Suchbegriffe (Punkt 2)
+async function runSearch(q, customTerms){
+  if(running) return;
   const terms = extractTerms(q);
-  const boolExpr = parseBoolean(q);
+  const boolExpr = customTerms ? null : parseBoolean(q);
   const proj = {id:'n'+Date.now(), date:'today', query:q, title:terms.slice(0,3).map(w=>w[0].toUpperCase()+w.slice(1)).join(' · ') || q.slice(0,30), terms, papers:[], live:true, offline:false, lang:L, boolExpr};
   projects = [proj, ...projects];
   current = proj; history = []; runProgress = 0; running = true; shownLines = 0;
@@ -899,10 +993,14 @@ async function startSearch(){
   show('running', false);
 
   const step = async (lines, progress, minMs)=>{ shownLines = lines; runProgress = progress; renderLog(proj, shownLines); renderSide(); await wait(minMs); };
+  if(!boolExpr){
+    proj.info = customTerms ? {lang:detectLang(q), origTerms:customTerms, enTerms:customTerms, custom:customTerms} : await understandQuery(q);
+  }
+  proj.searchLangs = [...new Set(['en', L, (proj.info && proj.info.lang) || L])].filter(l=>['en','de','es'].includes(l));
   await step(1, 1, 500);          // Thema verstanden
   await step(2, 1, 300);          // Suche läuft
   try{
-    const res = await searchReal(q, [proj.lang], null, boolExpr);
+    const res = await searchReal(q, proj.searchLangs, null, boolExpr, proj.info);
     proj.papers = res.papers;
   }catch(e){
     const base = demoFor(q);
@@ -929,7 +1027,8 @@ async function startSearch(){
 async function extendSearch(){
   const p = current;
   if(running || !p || !p.live || p.extended) return;
-  p.extLangs = ['en','de','es'].filter(l=>l!==(p.lang||'en'));
+  p.extLangs = ['en','de','es'].filter(l=>!(p.searchLangs||[p.lang||'en']).includes(l));
+  if(!p.extLangs.length) return;
   p.addedCount = 0; p.extending = true;
   running = true; runProgress = 0; shownLines = 0; history = [];
   document.getElementById('liveDot').classList.add('busy');
@@ -939,7 +1038,7 @@ async function extendSearch(){
   await step(2, 1, 300);
   let added;
   try{
-    added = (await searchReal(tx(p.query), p.extLangs, new Set(p.papers.map(x=>x.oaId)), p.boolExpr)).papers;
+    added = (await searchReal(tx(p.query), p.extLangs, new Set(p.papers.map(x=>x.oaId)), p.boolExpr, p.info)).papers;
   }catch(e){
     running = false; p.extending = false;
     document.getElementById('liveDot').classList.remove('busy');
@@ -1065,7 +1164,22 @@ async function startCheck(){
   renderResults();
   show('results', false);
 }
+function renderTerms(p){
+  const el = document.getElementById('resTerms');
+  if(p.mode==='check' || !p.info){ el.innerHTML = ''; return; }
+  const terms = shownTerms(p);
+  el.innerHTML = `<div class="terms"><span class="muted small">${t('res_terms_l')}</span>${terms.map(x=>`<span class="term">${esc(x)}</span>`).join('')}<button class="linkbtn" onclick="document.getElementById('termsEdit').classList.toggle('open')">${t('res_terms_edit')}</button></div>
+    <div class="terms-edit" id="termsEdit"><input id="termsInput" value="${esc(terms.join(', '))}" placeholder="${esc(t('res_terms_ph'))}" onkeydown="if(event.key==='Enter')researchTerms()"><button class="btn primary" onclick="researchTerms()">${t('res_terms_go')}</button></div>
+    ${p.info.relaxed ? `<p class="small muted" style="margin:0 0 10px">${t('res_relaxed',{t:esc(p.info.relaxed.join(', '))})}</p>` : ''}
+    ${p.info.translated ? `<p class="small muted" style="margin:0 0 10px">${t('res_tr_note')}</p>` : ''}`;
+}
+function researchTerms(){
+  const v = (document.getElementById('termsInput').value||'').split(',').map(x=>x.trim()).filter(Boolean);
+  if(!v.length){ toast(t('t_terms_empty')); return; }
+  runSearch(tx(current.query), v.slice(0,8));
+}
 function renderCheckResults(p){
+  document.getElementById('resTerms').innerHTML = '';
   const f = checkFound(p), n = p.lines.length;
   document.getElementById('resQuery').textContent = t('chk_your',{n});
   document.getElementById('resH').textContent = t('chk_h');
@@ -1102,9 +1216,10 @@ function logLines(p){
       ['✅', passed(p).length ? t('l6',{b:total(passed(p)[0]), a:fmt(avg(p))}) : t('l6_none',{lang:langList([L])})]
     ];
   }
-  const langs = langList(p.extending ? p.extLangs : [p.lang || L]);
+  const langs = langList(p.extending ? p.extLangs : (p.searchLangs || [p.lang || L]));
+  const tr = p.info && p.info.translated ? t('tr_from',{lang:t('ln_'+p.info.lang)}) : '';
   const lines = [
-    ['🧠', p.extending ? t('ext_l0',{langs}) : (p.boolExpr ? t('bool_l0',{e:esc(p.boolExpr.expr)}) : t('l0'))],
+    ['🧠', p.extending ? t('ext_l0',{langs}) : (p.boolExpr ? t('bool_l0',{e:esc(p.boolExpr.expr)}) : (p.info ? t('l0_terms',{t:esc(shownTerms(p).join(', ')), tr}) : t('l0')))],
     ['🔎', t('l1',{lang:langs})],
     ['📚', p.extending ? t('ext_l2',{n:p.addedCount||0}) : t('l2',{n:found(p)})],
     ['🕵️', t('l3')],
@@ -1131,16 +1246,17 @@ function renderResults(){
   if(p.mode==='check') return renderCheckResults(p);
   document.getElementById('resH').textContent = t('res_h');
   document.getElementById('resQuery').textContent = tx(p.query);
+  renderTerms(p);
   document.getElementById('resNote').innerHTML = t('res_note') + (p.offline ? t('res_note_demo') : (p.live ? t('res_note_live') : ''));
   document.getElementById('resSummary').innerHTML = `
     <div class="st"><div class="n">${found(p)}</div><div class="l">${t('found')}</div></div>
     <div class="st"><div class="n" style="color:var(--bad)">${rejected(p).length}</div><div class="l">${t('rejected')}</div></div>
     <div class="st"><div class="n" style="color:var(--good)">${passed(p).length}</div><div class="l">${t('rated')}</div></div>`;
-  const others = ['en','de','es'].filter(l=>l!==(p.lang||'en'));
-  document.getElementById('resExt').innerHTML = !p.live ? '' : (p.extended
+  const others = ['en','de','es'].filter(l=>!(p.searchLangs||[p.lang||'en']).includes(l));
+  document.getElementById('resExt').innerHTML = (!p.live || (!p.extended && !others.length)) ? '' : (p.extended
     ? `<p class="small muted ext-note">${t('ext_done',{n:p.addedCount||0, langs:langList(p.extLangs||others)})}</p>`
     : `<button class="btn ext" onclick="extendSearch()">${t('ext_btn')}</button><p class="small muted ext-note">${t('ext_hint',{langs:langList(others)})}</p>`);
-  document.getElementById('resList').innerHTML = (!passed(p).length ? `<div class="card soft"><div class="small muted">${t('res_empty',{lang:langList([p.lang||L])})}</div></div>` : '') + passed(p).map(x=>`
+  document.getElementById('resList').innerHTML = (!passed(p).length ? `<div class="card soft"><div class="small muted">${t('res_empty',{lang:langList(p.searchLangs||[p.lang||L])})}</div></div>` : '') + passed(p).map(x=>`
     <div class="card row" onclick="openPaper(${x.id})">
       ${badge(total(x))}
       <div class="body">
