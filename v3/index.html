@@ -81,6 +81,11 @@
   .term.c{background:var(--warn-soft);color:var(--warn-ink)}
   .sortbar{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;color:var(--muted)}
   .sortbar select{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;background:var(--card);color:var(--ink)}
+  .jline{font-size:13px;color:var(--muted);margin:0 0 6px}
+  .ranks{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:0 0 6px}
+  .rk{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:600;color:var(--ink);background:var(--card)}
+  .rk.none{color:var(--muted);font-weight:500;border-style:dashed}
+  .rk-l{font-size:12px;color:var(--muted)}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -260,6 +265,8 @@
         </div>
         <div id="pRejected"></div>
         <div id="pRatedBlock">
+          <h2 data-i18n="h_journal"></h2>
+          <div class="card" id="pJournalCard"></div>
           <h2 data-i18n="h_why"></h2>
           <div class="card" id="pCrit"></div>
           <h2 data-i18n="h_about"></h2>
@@ -607,6 +614,28 @@ Object.assign(STR.es, {
   doi_target:'lleva a {d}', doi_unknown:'No se pudo comprobar el DOI', doi_ok:'DOI comprobado'
 });
 
+Object.assign(STR.de, {
+  j_publisher_unknown:'Verlag unbekannt', rank_l:'Zeitschrift:', rank_sjr:'SJR {q}', rank_vhb:'VHB {r}',
+  rank_none_sjr:'SJR: kein Ranking gefunden', rank_none_vhb:'VHB: kein Ranking gefunden', rank_sjr_missing:'SJR: Liste noch nicht eingebunden',
+  rank_note:'Score = Qualität der Quellen, die das Paper zitiert. Ranking = Ansehen der Zeitschrift (SJR-Quartil, VHB-JOURQUAL 2024). Beides ist unabhängig voneinander.',
+  h_journal:'Zeitschrift und Ranking', j_name:'Zeitschrift', j_publisher:'Verlag', j_country:'Land der Zeitschrift', j_year:'Erscheinungsjahr',
+  j_sjr:'SJR-Quartil', j_vhb:'VHB-JOURQUAL 2024', j_vhb_areas:'Teilratings: {a}', j_unknown:'unbekannt'
+});
+Object.assign(STR.en, {
+  j_publisher_unknown:'Publisher unknown', rank_l:'Journal:', rank_sjr:'SJR {q}', rank_vhb:'VHB {r}',
+  rank_none_sjr:'SJR: no ranking found', rank_none_vhb:'VHB: no ranking found', rank_sjr_missing:'SJR: list not yet included',
+  rank_note:'Score = quality of the sources the paper cites. Ranking = standing of the journal (SJR quartile, VHB-JOURQUAL 2024). The two are independent.',
+  h_journal:'Journal and ranking', j_name:'Journal', j_publisher:'Publisher', j_country:'Country of the journal', j_year:'Year of publication',
+  j_sjr:'SJR quartile', j_vhb:'VHB-JOURQUAL 2024', j_vhb_areas:'Area ratings: {a}', j_unknown:'unknown'
+});
+Object.assign(STR.es, {
+  j_publisher_unknown:'Editorial desconocida', rank_l:'Revista:', rank_sjr:'SJR {q}', rank_vhb:'VHB {r}',
+  rank_none_sjr:'SJR: sin ranking', rank_none_vhb:'VHB: sin ranking', rank_sjr_missing:'SJR: lista aún no incluida',
+  rank_note:'Puntuación = calidad de las fuentes que cita el paper. Ranking = prestigio de la revista (cuartil SJR, VHB-JOURQUAL 2024). Son independientes.',
+  h_journal:'Revista y ranking', j_name:'Revista', j_publisher:'Editorial', j_country:'País de la revista', j_year:'Año de publicación',
+  j_sjr:'Cuartil SJR', j_vhb:'VHB-JOURQUAL 2024', j_vhb_areas:'Ratings parciales: {a}', j_unknown:'desconocido'
+});
+
 let L = 'en';
 try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
 function t(key, vars){ let s = (STR[L][key] !== undefined ? STR[L][key] : STR.de[key]) || key; if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
@@ -906,8 +935,10 @@ function fromWork(w){
   if(b.first_page) journal += ', '+b.first_page+(b.last_page?'–'+b.last_page:'');
   const doi = w.doi ? w.doi.replace(/^https?:\/\/doi\.org\//,'') : '';
   const authorIds = new Set((w.authorships||[]).map(a=>a.author && a.author.id).filter(Boolean));
+  const source = src ? {id:src.id, name:src.display_name||'', publisher:src.host_organization_name||'', type:src.type||'',
+    issns:[...new Set([src.issn_l, ...(src.issn||[])].filter(Boolean).map(x=>String(x).toUpperCase()))], country:''} : null;
   const p = {
-    id: nextId++, real:true, oaId:w.id, status:'pass',
+    id: nextId++, real:true, oaId:w.id, status:'pass', source,
     title: w.title || w.display_name || '—', authors: formatAuthors(w.authorships), journal, year: w.publication_year || '',
     doi, lang: w.language || '', type: TYPE_MAP[w.type] || 'ty_other', rawType:w.type, n:{key:'cited_n', n:w.cited_by_count||0},
     abstract: invertedToText(w.abstract_inverted_index), refIds:(w.referenced_works||[]).map(x=>x.replace('https://openalex.org/','')).slice(0,50),
@@ -962,6 +993,47 @@ async function checkDois(papers){
       }catch(e){ p.doiStatus = 'unknown'; }
     }
   }));
+}
+/* Punkt 5: Zeitschriften-Ranking (VHB-JOURQUAL 2024, SJR-Quartil) und Land der Zeitschrift */
+let VHB = undefined, VHB_T = {}, SJR = undefined;   // undefined = lädt, null = Liste fehlt
+function rerenderOpen(){
+  const a = document.querySelector('.screen.active'); if(!a || !current) return;
+  if(a.id==='results') renderResults(); else if(a.id==='paper' && currentPaper) renderPaper(currentPaper); else if(a.id==='preselect') renderPreselect();
+}
+fetch('data/vhb.json').then(r=>r.ok?r.json():null).then(d=>{ VHB = d; if(d) for(const k in d) VHB_T[normText(d[k].t)] = k; rerenderOpen(); }).catch(()=>{ VHB = null; });
+fetch('data/sjr.json').then(r=>r.ok?r.json():null).then(d=>{ SJR = d; rerenderOpen(); }).catch(()=>{ SJR = null; });
+function vhbFor(x){
+  if(!VHB || !x.source) return null;
+  for(const i of x.source.issns) if(VHB[i]) return VHB[i];
+  const k = VHB_T[normText(x.source.name)]; return k ? VHB[k] : null;
+}
+function sjrFor(x){
+  if(!SJR || !x.source) return null;
+  for(const i of x.source.issns){ const q = SJR[i.replace('-','')] || SJR[i]; if(q) return q; }
+  return null;
+}
+function countryName(code){ try{ return code ? new Intl.DisplayNames([L], {type:'region'}).of(code) : ''; }catch(e){ return code||''; } }
+function journalLine(x){
+  const s = x.source;
+  const parts = [s && s.name ? s.name : x.journal.split(',')[0], s && s.publisher ? s.publisher : (x.real ? t('j_publisher_unknown') : ''), x.year, s && s.country ? countryName(s.country) : ''].filter(Boolean);
+  return `<p class="jline">${parts.map(esc).join(' · ')}</p>`;
+}
+function rankChips(x){
+  if(!x.real) return '';
+  const q = sjrFor(x), v = vhbFor(x);
+  const sjr = SJR===null ? `<span class="rk none">${t('rank_sjr_missing')}</span>` : q ? `<span class="rk">${t('rank_sjr',{q})}</span>` : `<span class="rk none">${t('rank_none_sjr')}</span>`;
+  const vhb = v ? `<span class="rk">${t('rank_vhb',{r:v.r})}</span>` : `<span class="rk none">${t('rank_none_vhb')}</span>`;
+  return `<div class="ranks"><span class="rk-l">${t('rank_l')}</span>${sjr}${vhb}</div>`;
+}
+async function enrichSources(papers){
+  const ids = [...new Set(papers.map(p=>p.source && p.source.id).filter(Boolean).map(id=>id.replace('https://openalex.org/','')))];
+  for(let i=0; i<ids.length; i+=50){
+    try{
+      const d = await oaFetch('https://api.openalex.org/sources?filter=openalex_id:'+ids.slice(i,i+50).join('|')+'&per-page=50&select=id,country_code,host_organization_name');
+      const m = {}; (d.results||[]).forEach(s=>{ m[s.id] = s; });
+      papers.forEach(p=>{ const s = p.source && m[p.source.id]; if(s){ p.source.country = s.country_code || ''; if(!p.source.publisher) p.source.publisher = s.host_organization_name || ''; } });
+    }catch(e){}
+  }
 }
 async function enrichRefs(p){
   if(p.status!=='pass' || !p.refIds.length) return;
@@ -1207,6 +1279,7 @@ async function runSearch(q, customTerms){
   await step(4, 2, 300);          // Prüfung läuft
   if(proj.live){
     await checkDois(proj.papers);
+    await enrichSources(proj.papers);
     const queue = proj.papers.filter(p=>p.status==='pass');
     let i = 0;
     await Promise.all([0,1,2,3].map(async ()=>{ while(i<queue.length){ const p = queue[i++]; await enrichRefs(p); } }));
@@ -1246,6 +1319,7 @@ async function extendSearch(){
   await step(3, 2, 600);
   await step(4, 2, 300);
   await checkDois(added);
+  await enrichSources(added);
   const queue = added.filter(x=>x.status==='pass');
   let i = 0;
   await Promise.all([0,1,2,3].map(async ()=>{ while(i<queue.length){ const x = queue[i++]; await enrichRefs(x); } }));
@@ -1352,6 +1426,7 @@ async function startCheck(){
   await step(3, 2, 500);
   await step(4, 2, 300);
   await checkDois(proj.papers);
+  await enrichSources(proj.papers);
   const queue = proj.papers.filter(x=>x.status==='pass');
   let j = 0;
   await Promise.all([0,1,2,3].map(async ()=>{ while(j<queue.length){ const x = queue[j++]; await enrichRefs(x); } }));
@@ -1387,7 +1462,7 @@ function renderCheckResults(p){
   const f = checkFound(p), n = p.lines.length;
   document.getElementById('resQuery').textContent = t('chk_your',{n});
   document.getElementById('resH').textContent = t('chk_h');
-  document.getElementById('resNote').innerHTML = t('res_note') + t('res_note_live');
+  document.getElementById('resNote').innerHTML = t('res_note') + t('res_note_live') + ' ' + t('rank_note');
   document.getElementById('resSummary').innerHTML = `
     <div class="st"><div class="n">${n}</div><div class="l">${t('chk_in')}</div></div>
     <div class="st"><div class="n" style="color:var(--good)">${f}</div><div class="l">${t('chk_found')}</div></div>
@@ -1401,7 +1476,8 @@ function renderCheckResults(p){
       ${rej ? `<div class="score s-x">✕<small>${t('out_short')}</small></div>` : badge(total(x))}
       <div class="body">
         <p class="title">${esc(x.title)}</p>
-        <p class="meta">${esc(x.authors)} · ${x.year} · ${esc(x.journal.split(',')[0])}</p>
+        <p class="meta">${esc(x.authors)}</p>
+        ${journalLine(x)}${rankChips(x)}
         <p class="why">${rej ? `<span class="pill bad">${t(x.reason)}</span>` : `<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span>`} <span class="muted small">${t(x.via==='doi'?'chk_via_doi':'chk_via_title')}</span></p>
         <p class="src-line">${t('chk_input')} ${esc(l.line.length>140 ? l.line.slice(0,140)+'…' : l.line)}</p>
       </div>
@@ -1451,7 +1527,7 @@ function renderResults(){
   document.getElementById('resH').textContent = t('res_h');
   document.getElementById('resQuery').textContent = tx(p.query);
   renderTerms(p);
-  document.getElementById('resNote').innerHTML = t('res_note') + (p.offline ? t('res_note_demo') : (p.live ? t('res_note_live') : ''));
+  document.getElementById('resNote').innerHTML = t('res_note') + ' ' + t('rank_note') + (p.offline ? t('res_note_demo') : (p.live ? t('res_note_live') : ''));
   document.getElementById('resSummary').innerHTML = `
     <div class="st"><div class="n">${found(p)}</div><div class="l">${t('found')}</div></div>
     <div class="st"><div class="n" style="color:var(--bad)">${rejected(p).length}</div><div class="l">${t('rejected')}</div></div>
@@ -1469,7 +1545,8 @@ function renderResults(){
       ${badge(total(x))}
       <div class="body">
         <p class="title">${esc(x.title)}</p>
-        <p class="meta">${esc(x.authors)} · ${x.year} · ${esc(x.journal.split(',')[0])}</p>
+        <p class="meta">${esc(x.authors)}</p>
+        ${journalLine(x)}${rankChips(x)}
         <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> <span class="muted small">${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</span></p>
         ${fitLine(x)}
       </div>
@@ -1503,6 +1580,15 @@ function renderPaper(x){
       return `<div class="crit"><div class="top"><span>${t('c'+c)}</span><b>${s}/10</b></div><div class="bar"><i style="width:${s*10}%;background:${col}"></i></div><div class="exp">${t('c'+c+'e')}</div></div>`;
     }).join('') + `<div class="small muted" style="padding-top:10px">${t('total_line')} <b style="color:var(--ink)">${total(x)}/10</b></div>`;
     document.getElementById('pAbstract').textContent = tx(x.abstract) || t('no_abstract');
+    const sx = x.source || {}, v = vhbFor(x), q = sjrFor(x);
+    const row = (k, val)=>`<div class="crit"><div class="top"><span>${k}</span><b>${val}</b></div></div>`;
+    document.getElementById('pJournalCard').innerHTML = x.real ? (
+      row(t('j_name'), esc(sx.name || x.journal.split(',')[0])) + row(t('j_publisher'), esc(sx.publisher || t('j_unknown'))) +
+      row(t('j_year'), esc(x.year)) + row(t('j_country'), esc(countryName(sx.country) || t('j_unknown'))) +
+      row(t('j_sjr'), SJR===null ? t('rank_sjr_missing').replace(/^SJR: /,'') : q ? esc(q) : t('rank_none_sjr').replace(/^SJR: /,'')) +
+      row(t('j_vhb'), v ? esc(v.r) : t('rank_none_vhb').replace(/^VHB: /,'')) +
+      (v ? `<div class="small muted" style="padding-top:8px">${t('j_vhb_areas',{a:esc(v.a.join(', '))})}</div>` : '') +
+      `<div class="small muted" style="padding-top:8px">${t('rank_note')}</div>`) : `<div class="small muted">${t('res_note_demo')}</div>`;
     const r = x.refs;
     document.getElementById('pRefs').innerHTML = `
       <div class="crit"><div class="top"><span>${t('ref_total')}</span><b>${r.total}</b></div></div>
@@ -1534,7 +1620,8 @@ function renderPreselect(){
       ${rej ? `<div class="score s-x">✕<small>${t('out_short')}</small></div>` : badge(total(x))}
       <div class="body">
         <p class="title">${esc(x.title)}</p>
-        <p class="meta">${esc(x.authors)} · ${x.year} · ${esc(x.journal.split(',')[0])}</p>
+        <p class="meta">${esc(x.authors)}</p>
+        ${journalLine(x)}${rankChips(x)}
         <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}${rej ? `<span class="pill bad">${t(x.reason)}</span> <span class="muted small">${esc(reasonLong(x).split('. ')[0])}.</span>` : `<span class="pill good">${t('passed')}</span> <span class="muted small">${t('rated_with',{n:total(x)})}</span>`}</p>
       </div>
       <div class="arrow">›</div>
