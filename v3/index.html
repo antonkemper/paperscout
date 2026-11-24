@@ -110,6 +110,18 @@
   .sum.pending ul.sum{opacity:.75}
   details.abs-d{margin-top:10px;font-size:14px}
   details.abs-d summary{cursor:pointer;color:var(--brand);font-weight:600}
+  .hdr{font-size:17px;font-weight:700;margin:2px 0 2px}
+  .hdr .ok{color:var(--good)} .hdr .out{color:var(--bad)}
+  .hdr-hint{font-size:13px;color:var(--muted);margin:0 0 4px}
+  details.outd{margin:14px 0}
+  details.outd > summary{cursor:pointer;font-weight:600;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);list-style:none}
+  details.outd > summary::-webkit-details-marker{display:none}
+  details.outd > summary::before{content:'▸ ';color:var(--muted)}
+  details.outd[open] > summary::before{content:'▾ '}
+  .outrow{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+  .outrow:last-child{border-bottom:0}
+  .outrow .ot{font-size:14px;font-weight:600;margin:0 0 3px}
+  .outlist{border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;background:var(--card);margin-top:-6px;padding-top:6px}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -271,6 +283,7 @@
         <div id="resExt"></div>
         <div class="sortbar" id="sortBar"><span data-i18n="sort_l"></span><select id="sortSel" onchange="sortMode=this.value;renderResults()"><option value="rel" data-i18n="sort_rel"></option><option value="score" data-i18n="sort_score"></option></select></div>
         <div id="resList"></div>
+        <div id="resOut"></div>
         <button class="btn ghost" onclick="openPreselect('all')" data-i18n="res_pre_btn"></button>
       </section>
 
@@ -733,6 +746,22 @@ Object.assign(STR.es, {
   sum_note:'Basado en el resumen · elaborado automáticamente (sin IA)', sum_note_tr:' · traducido automáticamente a tu idioma (MyMemory)',
   sum_note_trwait:' · traduciendo …', sum_note_trfail:' · traducción no disponible ahora, se muestra en el idioma original',
   sum_none:'No hay resumen disponible, por eso no hay síntesis.', abs_full:'Mostrar el resumen completo (idioma original)'
+});
+
+Object.assign(STR.de, {
+  hdr:'{c} geprüft · <span class="ok">{r} empfohlen ({pct} %)</span> · <span class="out">{o} aussortiert</span>',
+  hdr_hint:'Empfohlen = Prüfung bestanden und Score ab 5. Aussortierte Treffer stehen unten mit Grund.',
+  out_h:'Aussortiert ({n}) – mit Grund', r_lowscore:'Score unter 5', res_h:'Empfohlene Papers'
+});
+Object.assign(STR.en, {
+  hdr:'{c} checked · <span class="ok">{r} recommended ({pct}%)</span> · <span class="out">{o} removed</span>',
+  hdr_hint:'Recommended = passed the check and scored 5 or more. Removed results are listed below with the reason.',
+  out_h:'Removed ({n}) – with reason', r_lowscore:'Score below 5', res_h:'Recommended papers'
+});
+Object.assign(STR.es, {
+  hdr:'{c} comprobados · <span class="ok">{r} recomendados ({pct} %)</span> · <span class="out">{o} descartados</span>',
+  hdr_hint:'Recomendado = superó la comprobación y tiene 5 o más. Los descartados aparecen abajo con el motivo.',
+  out_h:'Descartados ({n}) – con motivo', r_lowscore:'Puntuación inferior a 5', res_h:'Papers recomendados'
 });
 
 let L = 'en';
@@ -1343,6 +1372,10 @@ let projects = [];   // v3: nur eigene Projekte, im Browser gespeichert (Punkt 7
 let current = null, currentPaper = null, filter = 'all', history = [], running = false, runProgress = 0, shownLines = 0;
 
 function found(p){ return p.papers.length; }
+// Punkt 9: empfohlen = Prüfung bestanden und Score ab 5; alles andere gilt als aussortiert
+function recommended(p){ return passed(p).filter(x=>total(x) >= 5); }
+function removedAll(p){ return [...rejected(p), ...passed(p).filter(x=>total(x) < 5)]; }
+function outReason(x){ return x.status==='rej' ? t(x.reason) : t('r_lowscore'); }
 function passed(p){ return p.papers.filter(x=>x.status==='pass').sort((a,b)=>total(b)-total(a)); }
 function rejected(p){ return p.papers.filter(x=>x.status==='rej'); }
 function total(x){ return Math.round(x.scores.reduce((a,b)=>a+b,0)/x.scores.length); }
@@ -1642,6 +1675,14 @@ async function startCheck(){
   show('results', false);
 }
 function afterRender(){ setTimeout(observeSummaries, 0); }
+function renderOut(p){
+  const out = removedAll(p);
+  document.getElementById('resOut').innerHTML = out.length ? `<details class="outd"><summary>${t('out_h',{n:out.length})}</summary><div class="outlist">${out.map(x=>`
+    <div class="outrow" onclick="openPaper(${x.id})">
+      ${x.status==='rej' ? `<div class="score s-x">✕<small>${t('out_short')}</small></div>` : badge(total(x))}
+      <div style="flex:1;min-width:0"><p class="ot">${esc(x.title)}</p><p class="why"><span class="pill bad">${outReason(x)}</span> <span class="muted small">${esc(x.authors)} · ${x.year}</span></p></div>
+    </div>`).join('')}</div></details>` : '';
+}
 function renderTerms(p){
   const el = document.getElementById('resTerms');
   if(p.mode==='check' || !p.info){ el.innerHTML = ''; return; }
@@ -1662,6 +1703,7 @@ function researchTerms(){
 }
 function renderCheckResults(p){
   document.getElementById('resTerms').innerHTML = '';
+  document.getElementById('resOut').innerHTML = '';
   document.getElementById('sortBar').style.display = 'none';
   const f = checkFound(p), n = p.lines.length;
   document.getElementById('resQuery').textContent = t('chk_your',{n});
@@ -1737,19 +1779,19 @@ function renderResults(){
   document.getElementById('resQuery').textContent = tx(p.query);
   renderTerms(p);
   document.getElementById('resNote').innerHTML = t('res_note') + ' ' + t('rank_note') + (p.offline ? t('res_note_demo') : (p.live ? t('res_note_live') : ''));
-  document.getElementById('resSummary').innerHTML = `
-    <div class="st"><div class="n">${found(p)}</div><div class="l">${t('found')}</div></div>
-    <div class="st"><div class="n" style="color:var(--bad)">${rejected(p).length}</div><div class="l">${t('rejected')}</div></div>
-    <div class="st"><div class="n" style="color:var(--good)">${passed(p).length}</div><div class="l">${t('rated')}</div></div>`;
+  const nC = found(p), nR = recommended(p).length;
+  document.getElementById('resSummary').innerHTML = `<div style="grid-column:1/-1"><p class="hdr">${t('hdr',{c:nC, r:nR, pct: nC ? Math.round(nR/nC*100) : 0, o:nC-nR})}</p><p class="hdr-hint">${t('hdr_hint')}</p></div>`;
   const others = ['en','de','es'].filter(l=>!(p.searchLangs||[p.lang||'en']).includes(l));
   document.getElementById('resExt').innerHTML = (!p.live || (!p.extended && !others.length)) ? '' : (p.extended
     ? `<p class="small muted ext-note">${t('ext_done',{n:p.addedCount||0, langs:langList(p.extLangs||others)})}</p>`
     : `<button class="btn ext" onclick="extendSearch()">${t('ext_btn')}</button><p class="small muted ext-note">${t('ext_hint',{langs:langList(others)})}</p>`);
-  const hasRel = passed(p).some(x=>x.rel);
+  const rec = recommended(p);
+  const hasRel = rec.some(x=>x.rel);
   document.getElementById('sortBar').style.display = hasRel ? '' : 'none';
   document.getElementById('sortSel').value = sortMode;
-  const list = (hasRel && sortMode==='rel') ? passed(p).slice().sort((a,b)=>(b.rel?b.rel.score:0)-(a.rel?a.rel.score:0) || total(b)-total(a)) : passed(p);
-  document.getElementById('resList').innerHTML = (!passed(p).length ? `<div class="card soft"><div class="small muted">${t('res_empty',{lang:langList(p.searchLangs||[p.lang||L])})}</div></div>` : '') + list.map(x=>`
+  const list = (hasRel && sortMode==='rel') ? rec.slice().sort((a,b)=>(b.rel?b.rel.score:0)-(a.rel?a.rel.score:0) || total(b)-total(a)) : rec;
+  renderOut(p);
+  document.getElementById('resList').innerHTML = (!rec.length ? `<div class="card soft"><div class="small muted">${t('res_empty',{lang:langList(p.searchLangs||[p.lang||L])})}</div></div>` : '') + list.map(x=>`
     <div class="card row" onclick="openPaper(${x.id})">
       ${badge(total(x))}
       <div class="body">
@@ -1865,7 +1907,7 @@ function renderSide(){
   document.getElementById('archive').innerHTML = projects.map(pr=>`
     <div class="proj ${current&&pr.id===current.id?'on':''}" onclick="loadProject('${pr.id}')">
       <div class="ico">📁</div>
-      <div style="min-width:0"><div class="pt">${esc(titleOf(pr))}</div><div class="pd">${t('arch_meta',{d:dateLabel(pr), n:passed(pr).length, a:fmt(avg(pr))})}</div></div>
+      <div style="min-width:0"><div class="pt">${esc(titleOf(pr))}</div><div class="pd">${t('arch_meta',{d:dateLabel(pr), n:recommended(pr).length, a:fmt(avg(pr))})}</div></div>
     </div>`).join('');
 }
 function loadProject(id){
