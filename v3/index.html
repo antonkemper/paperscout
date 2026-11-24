@@ -63,6 +63,11 @@
   textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;font-size:16px;resize:none;outline:none;background:var(--card);color:var(--ink)}
   textarea::placeholder{color:var(--muted)}
   textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .modes{display:flex;gap:4px;background:var(--soft2);border:1px solid var(--line);border-radius:12px;padding:4px;margin:12px 0 6px}
+  .mode{flex:1;border:0;background:transparent;border-radius:9px;padding:9px 10px;font:inherit;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer}
+  .mode.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  textarea.tall{min-height:190px;font-size:15px}
+  .src-line{font-size:13px;color:var(--muted);margin:6px 0 0;word-break:break-word}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -175,6 +180,11 @@
 
       <!-- ===== SCREEN 1: THEMA ===== -->
       <section id="start" class="screen active">
+        <div class="modes">
+          <button class="mode on" data-mode="search" onclick="setMode('search')" data-i18n="mode_search"></button>
+          <button class="mode" data-mode="check" onclick="setMode('check')" data-i18n="mode_check"></button>
+        </div>
+        <div id="searchPane">
         <p style="font-size:22px;font-weight:700;margin:14px 0 4px" data-i18n="start_h"></p>
         <p class="muted" style="margin:0 0 14px" data-i18n="start_p"></p>
         <textarea id="query" data-i18n-ph="start_ph"></textarea>
@@ -185,6 +195,16 @@
         <div style="height:16px"></div>
         <button class="btn primary" onclick="startSearch()" data-i18n="search_btn"></button>
         <div class="card soft" style="margin-top:16px"><div class="small muted" data-i18n="howto"></div></div>
+        </div>
+        <div id="checkPane" style="display:none">
+          <p style="font-size:22px;font-weight:700;margin:14px 0 4px" data-i18n="check_h"></p>
+          <p class="muted" style="margin:0 0 14px" data-i18n="check_p"></p>
+          <textarea id="checkInput" class="tall" data-i18n-ph="check_ph"></textarea>
+          <button class="chip" onclick="useCheckExample()"><span data-i18n="check_ex"></span></button>
+          <div style="height:16px"></div>
+          <button class="btn primary" onclick="startCheck()" data-i18n="check_btn"></button>
+          <div class="card soft" style="margin-top:16px"><div class="small muted" data-i18n="check_howto"></div></div>
+        </div>
       </section>
 
       <!-- ===== SCREEN 2: LÄUFT ===== -->
@@ -202,7 +222,7 @@
         <p class="muted" style="margin:4px 0 2px" data-i18n="res_topic"></p>
         <p style="font-size:17px;font-weight:600;margin:0 0 12px" id="resQuery"></p>
         <div class="summary" id="resSummary"></div>
-        <h2 data-i18n="res_h"></h2>
+        <h2 id="resH"></h2>
         <div class="card soft" style="padding:10px 12px"><div class="small muted" id="resNote"></div></div>
         <div id="resExt"></div>
         <div id="resList"></div>
@@ -467,6 +487,49 @@ es:{
   rl_norefs:'El paper no tiene bibliografía en la base de datos. Sin fuentes no se puede comprobar su calidad.',
   rl_notfound:'No constan ni DOI ni editorial. El paper no se puede verificar con claridad.'
 }};
+
+Object.assign(STR.de, {
+  mode_search:'Papers suchen', mode_check:'Meine Quellen prüfen',
+  check_h:'Welche Quellen willst du prüfen?',
+  check_p:'Füge DOIs, Titel oder dein ganzes Literaturverzeichnis ein, eine Quelle pro Zeile. Jede Quelle wird in OpenAlex gesucht und mit demselben Score bewertet wie in der Suche.',
+  check_ph:'z. B.\n10.1016/j.compedu.2015.08.016\nDoes working from home work? Evidence from a Chinese experiment\nWeaver, J. L., & Swank, J. M. (2021). An examination of college students’ social media use …',
+  check_ex:'Beispiel einfügen (5 Quellen)', check_btn:'Quellen prüfen',
+  check_howto:'Funktioniert neben Google Scholar, Findex, CNKI oder Perplexity: Such dort wie gewohnt und prüf hier, wie gut deine Quellen belegt sind. Was nicht gefunden wird, steht als „nicht gefunden“ in der Liste.',
+  check_title:'Quellenprüfung ({n})', t_check_empty:'Füge zuerst mindestens eine Quelle ein',
+  c_l0:'Eingabe gelesen: {n} Quellen erkannt.', c_l1:'Suche jede Quelle in OpenAlex: DOI direkt, sonst über den Titel …', c_l2:'<b>{f} von {n}</b> Quellen gefunden, {nf} nicht gefunden',
+  s1_check:'{n} Quellen erkannt', s2_check:'{f} von {n} Quellen gefunden',
+  chk_your:'Deine Quellen ({n})', chk_h:'Ergebnis pro Quelle (in deiner Reihenfolge)', chk_in:'eingegeben', chk_found:'gefunden', chk_nf:'nicht gefunden',
+  chk_nf_pill:'Nicht gefunden', chk_nf_hint:'Nicht in OpenAlex gefunden. Prüfe die Schreibweise oder füge die DOI ein.', chk_input:'Deine Eingabe:',
+  chk_via_doi:'über DOI gefunden', chk_via_title:'über Titel gefunden'
+});
+Object.assign(STR.en, {
+  mode_search:'Find papers', mode_check:'Check my sources',
+  check_h:'Which sources do you want to check?',
+  check_p:'Paste DOIs, titles or your whole reference list, one source per line. Each source is looked up in OpenAlex and rated with the same score as in the search.',
+  check_ph:'e.g.\n10.1016/j.compedu.2015.08.016\nDoes working from home work? Evidence from a Chinese experiment\nWeaver, J. L., & Swank, J. M. (2021). An examination of college students’ social media use …',
+  check_ex:'Insert example (5 sources)', check_btn:'Check sources',
+  check_howto:'Works alongside Google Scholar, your library catalogue, CNKI or Perplexity: search there as usual and check here how well your sources are backed. Anything that cannot be found is listed as “not found”.',
+  check_title:'Source check ({n})', t_check_empty:'Paste at least one source first',
+  c_l0:'Input read: {n} sources detected.', c_l1:'Looking up each source in OpenAlex: DOI directly, otherwise by title …', c_l2:'<b>{f} of {n}</b> sources found, {nf} not found',
+  s1_check:'{n} sources detected', s2_check:'{f} of {n} sources found',
+  chk_your:'Your sources ({n})', chk_h:'Result per source (in your order)', chk_in:'entered', chk_found:'found', chk_nf:'not found',
+  chk_nf_pill:'Not found', chk_nf_hint:'Not found in OpenAlex. Check the spelling or paste the DOI.', chk_input:'Your input:',
+  chk_via_doi:'found via DOI', chk_via_title:'found via title'
+});
+Object.assign(STR.es, {
+  mode_search:'Buscar papers', mode_check:'Comprobar mis fuentes',
+  check_h:'¿Qué fuentes quieres comprobar?',
+  check_p:'Pega DOIs, títulos o tu bibliografía completa, una fuente por línea. Cada fuente se busca en OpenAlex y se puntúa igual que en la búsqueda.',
+  check_ph:'p. ej.\n10.1016/j.compedu.2015.08.016\nDoes working from home work? Evidence from a Chinese experiment\nWeaver, J. L., & Swank, J. M. (2021). An examination of college students’ social media use …',
+  check_ex:'Insertar ejemplo (5 fuentes)', check_btn:'Comprobar fuentes',
+  check_howto:'Funciona junto a Google Scholar, el catálogo de tu biblioteca, CNKI o Perplexity: busca allí como siempre y comprueba aquí lo bien fundamentadas que están tus fuentes. Lo que no se encuentre aparece como «no encontrado».',
+  check_title:'Comprobación de fuentes ({n})', t_check_empty:'Pega primero al menos una fuente',
+  c_l0:'Entrada leída: {n} fuentes detectadas.', c_l1:'Buscando cada fuente en OpenAlex: por DOI directamente, si no por título …', c_l2:'<b>{f} de {n}</b> fuentes encontradas, {nf} no encontradas',
+  s1_check:'{n} fuentes detectadas', s2_check:'{f} de {n} fuentes encontradas',
+  chk_your:'Tus fuentes ({n})', chk_h:'Resultado por fuente (en tu orden)', chk_in:'introducidas', chk_found:'encontradas', chk_nf:'no encontradas',
+  chk_nf_pill:'No encontrado', chk_nf_hint:'No encontrado en OpenAlex. Revisa la ortografía o pega el DOI.', chk_input:'Tu entrada:',
+  chk_via_doi:'encontrado por DOI', chk_via_title:'encontrado por título'
+});
 
 let L = 'en';
 try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
@@ -735,11 +798,11 @@ function badge(n,big){ return `<div class="score ${big?'big':''} ${cls(n)}">${n}
 function label(n){ return t(n>=8?'lbl_high':n>=5?'lbl_mid':'lbl_low'); }
 function nText(n){ return (n && typeof n==='object') ? t(n.key, {n:n.n}) : n; }
 function reasonLong(x){ const r = x.reasonLong; return (r && r.key) ? t(r.key, r.vars) : tx(r); }
-function titleOf(p){ return tx(p.title); }
+function titleOf(p){ return (p.title && p.title.key) ? t(p.title.key, p.title.vars) : tx(p.title); }
 
 const STEP_DEFS = [
-  {t:'s1', d:p=>p? (p.boolExpr ? t('s1_bool') : t('s1_d')) : t('s1_wait')},
-  {t:'s2', d:p=>p? t('s2_d',{n:found(p)}) : t('s2_idle'), act:'s2_act', go:()=>openPreselect('all')},
+  {t:'s1', d:p=>p? (p.mode==='check' ? t('s1_check',{n:p.lines.length}) : p.boolExpr ? t('s1_bool') : t('s1_d')) : t('s1_wait')},
+  {t:'s2', d:p=>p? (p.mode==='check' ? t('s2_check',{f:checkFound(p),n:p.lines.length}) : t('s2_d',{n:found(p)})) : t('s2_idle'), act:'s2_act', go:()=>openPreselect('all')},
   {t:'s3', d:p=>p? t('s3_d',{n:rejected(p).length}) : t('s3_idle'), act:'s3_act', go:()=>openPreselect('rej')},
   {t:'s4', d:p=>p? t('s4_d',{n:passed(p).length}) : t('s4_idle'), act:'s4_act', go:()=>show('results')},
   {t:'s5', d:p=>p? t('s5_d',{a:fmt(avg(p))}) : '', act:'s5_act', go:()=>show('results')}
@@ -898,7 +961,147 @@ async function extendSearch(){
   show('results', false);
 }
 
+/* =========================================================
+   PRÜFMODUS: eigene Quellen prüfen (Punkt 1)
+   ========================================================= */
+let mode = 'search';
+const chkEl = document.getElementById('checkInput');
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('on', b.dataset.mode===m));
+  document.getElementById('searchPane').style.display = m==='search' ? '' : 'none';
+  document.getElementById('checkPane').style.display = m==='check' ? '' : 'none';
+}
+const CHECK_EXAMPLE = [
+  '10.1016/j.compedu.2015.08.016',
+  'Weaver, J. L., & Swank, J. M. (2021). An examination of college students’ social media use, fear of missing out, and mindful attention. Journal of College Counseling, 24(2), 132–145.',
+  'Functional Imaging of Working Memory after 24 Hr of Total Sleep Deprivation',
+  'Bloom, N., Liang, J., Roberts, J., & Ying, Z. J. (2015). Does working from home work? Evidence from a Chinese experiment. The Quarterly Journal of Economics, 130(1), 165–218.',
+  'Sleep restriction and working memory in undergraduate students: a two-week field study'
+].join('\n');
+function useCheckExample(){ chkEl.value = CHECK_EXAMPLE; chkEl.focus(); }
+const DOI_RE = /10\.\d{4,9}\/[^\s"<>]+/i;
+function normText(s){ return String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim(); }
+// Anteil der Titelwörter, die in der eingegebenen Zeile vorkommen
+function titleMatch(line, title){
+  const l = ' '+normText(line)+' ';
+  const words = normText(title).split(' ').filter(w=>w.length>2);
+  if(!words.length) return 0;
+  const hit = words.filter(w=>l.includes(' '+w+' ')).length;
+  return hit < Math.min(3, words.length) ? 0 : hit/words.length;
+}
+function cleanCitation(line){
+  return line.replace(/https?:\/\/\S+/g,' ').replace(DOI_RE,' ').replace(/\(\d{4}[a-z]?\)/g,' ')
+    .replace(/\b\d+(\(\d+\))?[,:]?\s*\d*\s*[-–]\s*\d+\b/g,' ').replace(/[^\p{L}\p{N}\s'-]/gu,' ').replace(/\s+/g,' ').trim().slice(0,300);
+}
+async function resolveLine(line){
+  const m = line.match(DOI_RE);
+  if(m){
+    const doi = m[0].replace(/[.,;)\]]+$/,'');
+    try{ const w = await oaFetch(OA+'/doi:'+doi+'?select='+WORK_FIELDS); if(w && w.id) return {w, via:'doi'}; }catch(e){}
+  }
+  const pickBest = results => {
+    let best = null, bestS = 0;
+    for(const w of (results||[])){ const sc = titleMatch(line, w.title||w.display_name||''); if(sc > bestS){ best = w; bestS = sc; } }
+    return bestS >= 0.75 ? best : null;
+  };
+  // 1) Titel aus der Literaturangabe herauslösen und gezielt im Titelfeld suchen
+  const title = extractCitedTitle(line);
+  const tw = normText(title).split(' ').filter(Boolean);
+  if(tw.length >= 2){
+    const d = await oaFetch(OA+'?filter=title.search:'+encodeURIComponent(tw.slice(0,25).join(' '))+'&per-page=5&select='+WORK_FIELDS);
+    const w = pickBest(d.results); if(w) return {w, via:'title'};
+  }
+  // 2) Rückfall: Volltextsuche mit der bereinigten Zeile
+  const c = cleanCitation(line);
+  if(c.split(' ').length < 3) return {w:null};
+  const d2 = await oaFetch(OA+'?search='+encodeURIComponent(c)+'&per-page=5&select='+WORK_FIELDS);
+  const w2 = pickBest(d2.results);
+  return w2 ? {w:w2, via:'title'} : {w:null};
+}
+// Titel aus einer Literaturangabe: in Anführungszeichen (MLA) oder der Satz nach der Jahreszahl (APA, Harvard)
+function extractCitedTitle(line){
+  const q = line.match(/[“"«„]([^”"»“]{8,})[”"»“]/);
+  if(q) return q[1];
+  const m = line.match(/\b(?:19|20)\d{2}[a-z]?\)?[.,:]?\s+(.+?[^A-Z\s][.?!])(?:\s|$)/);
+  if(m && m[1].split(' ').length >= 3) return m[1];
+  return line.replace(DOI_RE,'').replace(/https?:\/\/\S+/g,'');
+}
+function checkFound(p){ return p.lines ? p.lines.filter(l=>l.pid).length : 0; }
+async function startCheck(){
+  const lines = chkEl.value.split(/\n+/).map(s=>s.trim()).filter(s=>s.length>3).slice(0,40);
+  if(!lines.length){ toast(t('t_check_empty')); chkEl.focus(); return; }
+  if(running) return;
+  const proj = {id:'c'+Date.now(), date:'today', mode:'check', query:lines.join('\n'), title:{key:'check_title', vars:{n:lines.length}},
+    terms:[], papers:[], live:true, offline:false, lang:L, lines:lines.map(l=>({line:l, pid:null}))};
+  projects = [proj, ...projects];
+  current = proj; history = []; runProgress = 0; running = true; shownLines = 0;
+  document.getElementById('liveDot').classList.add('busy');
+  show('running', false);
+  const step = async (n, progress, minMs)=>{ shownLines = n; runProgress = progress; renderLog(proj, shownLines); renderSide(); await wait(minMs); };
+  await step(1, 1, 400);
+  await step(2, 1, 200);
+  let k = 0, errors = 0;
+  await Promise.all([0,1,2].map(async ()=>{
+    while(k < lines.length){
+      const i = k++;
+      try{
+        const r = await resolveLine(lines[i]);
+        if(r.w){ const pp = fromWork(r.w); pp.via = r.via; pp.inputLine = lines[i]; proj.papers.push(pp); proj.lines[i].pid = pp.id; }
+      }catch(e){ errors++; }
+    }
+  }));
+  if(errors === lines.length){ running = false; document.getElementById('liveDot').classList.remove('busy'); toast(t('l_offline')); projects = projects.filter(x=>x!==proj); current = null; show('start', false); return; }
+  await step(3, 2, 500);
+  await step(4, 2, 300);
+  const queue = proj.papers.filter(x=>x.status==='pass');
+  let j = 0;
+  await Promise.all([0,1,2,3].map(async ()=>{ while(j<queue.length){ const x = queue[j++]; await enrichRefs(x); } }));
+  await step(5, 3, 500);
+  await step(6, 4, 600);
+  await step(7, 5, 400);
+  running = false;
+  document.getElementById('liveDot').classList.remove('busy');
+  renderResults();
+  show('results', false);
+}
+function renderCheckResults(p){
+  const f = checkFound(p), n = p.lines.length;
+  document.getElementById('resQuery').textContent = t('chk_your',{n});
+  document.getElementById('resH').textContent = t('chk_h');
+  document.getElementById('resNote').innerHTML = t('res_note') + t('res_note_live');
+  document.getElementById('resSummary').innerHTML = `
+    <div class="st"><div class="n">${n}</div><div class="l">${t('chk_in')}</div></div>
+    <div class="st"><div class="n" style="color:var(--good)">${f}</div><div class="l">${t('chk_found')}</div></div>
+    <div class="st"><div class="n" style="color:var(--bad)">${n-f}</div><div class="l">${t('chk_nf')}</div></div>`;
+  document.getElementById('resExt').innerHTML = '';
+  document.getElementById('resList').innerHTML = p.lines.map(l=>{
+    const x = l.pid ? p.papers.find(pp=>pp.id===l.pid) : null;
+    if(!x) return `<div class="card"><p class="why" style="margin:0 0 6px"><span class="pill bad">${t('chk_nf_pill')}</span></p><p style="margin:0;font-size:15px">${esc(l.line)}</p><p class="src-line">${t('chk_nf_hint')}</p></div>`;
+    const rej = x.status==='rej';
+    return `<div class="card row" onclick="openPaper(${x.id})">
+      ${rej ? `<div class="score s-x">✕<small>${t('out_short')}</small></div>` : badge(total(x))}
+      <div class="body">
+        <p class="title">${esc(x.title)}</p>
+        <p class="meta">${esc(x.authors)} · ${x.year} · ${esc(x.journal.split(',')[0])}</p>
+        <p class="why">${rej ? `<span class="pill bad">${t(x.reason)}</span>` : `<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span>`} <span class="muted small">${t(x.via==='doi'?'chk_via_doi':'chk_via_title')}</span></p>
+        <p class="src-line">${t('chk_input')} ${esc(l.line.length>140 ? l.line.slice(0,140)+'…' : l.line)}</p>
+      </div>
+      <div class="arrow">›</div>
+    </div>`;
+  }).join('');
+}
+
 function logLines(p){
+  if(p.mode==='check'){
+    const n = p.lines.length, f = checkFound(p);
+    return [
+      ['🧠', t('c_l0',{n})], ['🔎', t('c_l1')], ['📚', t('c_l2',{f, n, nf:n-f})], ['🕵️', t('l3')],
+      ['🚫', t('l4',{n:rejected(p).length, r:[...new Set(rejected(p).map(r=>t(r.reason).toLowerCase()))].join(', ') || '–'})],
+      ['⚖️', t('l5',{n:passed(p).length})],
+      ['✅', passed(p).length ? t('l6',{b:total(passed(p)[0]), a:fmt(avg(p))}) : t('l6_none',{lang:langList([L])})]
+    ];
+  }
   const langs = langList(p.extending ? p.extLangs : [p.lang || L]);
   const lines = [
     ['🧠', p.extending ? t('ext_l0',{langs}) : (p.boolExpr ? t('bool_l0',{e:esc(p.boolExpr.expr)}) : t('l0'))],
@@ -925,6 +1128,8 @@ function renderLog(p, shown){
    ========================================================= */
 function renderResults(){
   const p = current;
+  if(p.mode==='check') return renderCheckResults(p);
+  document.getElementById('resH').textContent = t('res_h');
   document.getElementById('resQuery').textContent = tx(p.query);
   document.getElementById('resNote').innerHTML = t('res_note') + (p.offline ? t('res_note_demo') : (p.live ? t('res_note_live') : ''));
   document.getElementById('resSummary').innerHTML = `
