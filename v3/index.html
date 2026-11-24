@@ -86,6 +86,17 @@
   .rk{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:600;color:var(--ink);background:var(--card)}
   .rk.none{color:var(--muted);font-weight:500;border-style:dashed}
   .rk-l{font-size:12px;color:var(--muted)}
+  .score-why{font-size:13px;color:var(--muted);margin:4px 0 0}
+  details.crit-d{margin:6px 0 0;font-size:13px}
+  details.crit-d summary{cursor:pointer;color:var(--brand);font-weight:600;list-style:none;display:inline-flex;align-items:center;gap:6px}
+  details.crit-d summary::-webkit-details-marker{display:none}
+  details.crit-d summary .i{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1.5px solid currentColor;font-size:11px;font-weight:700;font-style:normal}
+  .cd-grid{display:grid;grid-template-columns:auto 60px 34px;gap:6px 10px;align-items:center;margin:8px 0 2px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
+  .cd-grid .nm{font-weight:600;color:var(--ink)}
+  .cd-grid .ex{grid-column:1 / -1;color:var(--muted);margin:-4px 0 4px}
+  .cd-bar{height:6px;border-radius:999px;background:var(--soft2);overflow:hidden}
+  .cd-bar i{display:block;height:100%}
+  .cd-grid .v{text-align:right;font-weight:700;color:var(--ink)}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -636,6 +647,19 @@ Object.assign(STR.es, {
   j_sjr:'Cuartil SJR', j_vhb:'VHB-JOURQUAL 2024', j_vhb_areas:'Ratings parciales: {a}', j_unknown:'desconocido'
 });
 
+Object.assign(STR.de, {
+  score_line:'Der Score {n}/10 bewertet die Qualität der Quellen, die dieses Paper zitiert – nicht, wie gut es zu deinem Thema passt.',
+  score_how:'So entsteht die {n}', score_avg:'Gesamt = Mittelwert der fünf Kriterien, gerundet: {n}/10'
+});
+Object.assign(STR.en, {
+  score_line:'The score {n}/10 rates the quality of the sources this paper cites – not how well it fits your topic.',
+  score_how:'How the {n} is calculated', score_avg:'Total = average of the five criteria, rounded: {n}/10'
+});
+Object.assign(STR.es, {
+  score_line:'La puntuación {n}/10 valora la calidad de las fuentes que cita este paper, no lo bien que encaja con tu tema.',
+  score_how:'Cómo se calcula el {n}', score_avg:'Total = media de los cinco criterios, redondeada: {n}/10'
+});
+
 let L = 'en';
 try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
 function t(key, vars){ let s = (STR[L][key] !== undefined ? STR[L][key] : STR.de[key]) || key; if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
@@ -887,6 +911,18 @@ function relevanceOf(w, info, cons){
     if(!c.v.some(v=>hasPhrase(title, v) || hasPhrase(abs, v))){ missing.push(c); factor *= c.type==='region' ? .2 : .5; }
   }
   return {score: best.score * factor, inT: best.inT, inA: best.inA, missing};
+}
+/* Punkt 6: Score erklären – Satz unter jedem Score + aufklappbare Kriterien */
+function scoreExplain(x){
+  if(x.status!=='pass') return '';
+  const n = total(x);
+  const rows = [1,2,3,4,5].map((c,i)=>{
+    const v = x.scores[i], col = v>=8?'var(--good)':v>=5?'var(--warn)':'var(--bad)';
+    return `<span class="nm">${t('c'+c)}</span><span class="cd-bar"><i style="width:${v*10}%;background:${col}"></i></span><span class="v">${v}</span><span class="ex">${t('c'+c+'e')}</span>`;
+  }).join('');
+  return `<p class="score-why">${t('score_line',{n})}</p>
+    <details class="crit-d" onclick="event.stopPropagation()"><summary><span class="i">i</span>${t('score_how',{n})}</summary>
+    <div class="cd-grid">${rows}<span class="ex" style="margin:2px 0 0">${t('score_avg',{n})}</span></div></details>`;
 }
 function fitLine(x){
   const r = x.rel; if(!r) return '';
@@ -1479,6 +1515,7 @@ function renderCheckResults(p){
         <p class="meta">${esc(x.authors)}</p>
         ${journalLine(x)}${rankChips(x)}
         <p class="why">${rej ? `<span class="pill bad">${t(x.reason)}</span>` : `<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span>`} <span class="muted small">${t(x.via==='doi'?'chk_via_doi':'chk_via_title')}</span></p>
+        ${scoreExplain(x)}
         <p class="src-line">${t('chk_input')} ${esc(l.line.length>140 ? l.line.slice(0,140)+'…' : l.line)}</p>
       </div>
       <div class="arrow">›</div>
@@ -1549,6 +1586,7 @@ function renderResults(){
         ${journalLine(x)}${rankChips(x)}
         <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> <span class="muted small">${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</span></p>
         ${fitLine(x)}
+        ${scoreExplain(x)}
       </div>
       <div class="arrow">›</div>
     </div>`).join('');
@@ -1575,7 +1613,7 @@ function renderPaper(x){
   document.getElementById('pRejected').innerHTML = rej ? `<div class="alert" style="margin-bottom:12px"><b>${t('why_out')}${t(x.reason)}</b>${esc(reasonLong(x))}<div style="margin-top:8px" class="small">${t('no_rating')}</div></div>` : '';
   document.getElementById('pRatedBlock').style.display = rej ? 'none' : 'block';
   if(!rej){
-    document.getElementById('pCrit').innerHTML = [1,2,3,4,5].map((c,i)=>{
+    document.getElementById('pCrit').innerHTML = `<p class="score-why" style="margin:0 0 6px">${t('score_line',{n:total(x)})}</p>` + [1,2,3,4,5].map((c,i)=>{
       const s = x.scores[i], col = s>=8?'var(--good)':s>=5?'var(--warn)':'var(--bad)';
       return `<div class="crit"><div class="top"><span>${t('c'+c)}</span><b>${s}/10</b></div><div class="bar"><i style="width:${s*10}%;background:${col}"></i></div><div class="exp">${t('c'+c+'e')}</div></div>`;
     }).join('') + `<div class="small muted" style="padding-top:10px">${t('total_line')} <b style="color:var(--ink)">${total(x)}/10</b></div>`;
