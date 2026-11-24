@@ -362,9 +362,7 @@
   <div id="langWrap">
     <div id="langMenu">
       <div class="lh" data-i18n="lang"></div>
-      <button class="lopt" data-l="de" onclick="setLang('de')"><span class="flag" data-flag="de"></span>Deutsch<span class="chk"></span></button>
-      <button class="lopt" data-l="en" onclick="setLang('en')"><span class="flag" data-flag="en"></span>English<span class="chk"></span></button>
-      <button class="lopt" data-l="es" onclick="setLang('es')"><span class="flag" data-flag="es"></span>Español<span class="chk"></span></button>
+      <div id="langOpts"></div>
     </div>
     <button id="langBtn" onclick="toggleLangMenu(event)"><span class="flag" id="langBtnFlag"></span><span id="langBtnText"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
@@ -381,7 +379,16 @@ const FLAGS = {
   en:'<svg viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="2.5"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></svg>',
   es:'<svg viewBox="0 0 3 2"><rect width="3" height="2" fill="#AA151B"/><rect y=".5" width="3" height="1" fill="#F1BF00"/></svg>'
 };
-const LANG_NAMES = {de:'Deutsch', en:'English', es:'Español'};
+/* Punkt 10: Sprachen als erweiterbare Liste. Neue Sprache: Texte in STR.<code> eintragen und ready:true setzen. */
+const LANGS = [
+  {code:'en', name:'English', ready:true},
+  {code:'de', name:'Deutsch', ready:true},
+  {code:'es', name:'Español', ready:true},
+  {code:'zh', name:'中文', ready:false}   // vorbereitet, Texte fehlen noch; bis dahin Rückfall auf Englisch
+];
+FLAGS.zh = '<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#DE2910"/><polygon points="5,2 6.2,5.6 10,5.6 6.9,7.8 8.1,11.4 5,9.2 1.9,11.4 3.1,7.8 0,5.6 3.8,5.6" fill="#FFDE00"/></svg>';
+const LANG_NAMES = Object.fromEntries(LANGS.map(l=>[l.code, l.name]));
+const READY_LANGS = LANGS.filter(l=>l.ready).map(l=>l.code);
 
 const STR = {
 de:{
@@ -764,10 +771,18 @@ Object.assign(STR.es, {
   out_h:'Descartados ({n}) – con motivo', r_lowscore:'Puntuación inferior a 5', res_h:'Papers recomendados'
 });
 
-let L = 'en';
-try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
-function t(key, vars){ let s = (STR[L][key] !== undefined ? STR[L][key] : STR.de[key]) || key; if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
-function tx(v){ if(Array.isArray(v)) return v; return (v && typeof v==='object') ? (v[L] || v.de) : v; }
+STR.zh = STR.zh || {};   // vorbereitet für Chinesisch
+Object.assign(STR.de, {ln_zh:'Chinesisch'}); Object.assign(STR.en, {ln_zh:'Chinese'}); Object.assign(STR.es, {ln_zh:'chino'});
+// Standardsprache: gespeicherte Wahl, sonst Browsersprache, sonst Englisch
+function browserLang(list){
+  for(const raw of (list || navigator.languages || [navigator.language || 'en'])){ const c = String(raw).toLowerCase().slice(0,2); if(READY_LANGS.includes(c)) return c; }
+  return 'en';
+}
+let L = browserLang();
+try{ const s = localStorage.getItem('ps_lang'); if(s && READY_LANGS.includes(s)) L = s; }catch(e){}
+// Fehlt ein Text in der gewählten Sprache, wird Englisch gezeigt (nie unbemerkt Deutsch)
+function t(key, vars){ let s = (STR[L] && STR[L][key] !== undefined) ? STR[L][key] : (STR.en[key] !== undefined ? STR.en[key] : key); if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
+function tx(v){ if(Array.isArray(v)) return v; return (v && typeof v==='object') ? (v[L] || v.en || v.de) : v; }
 function T(de,en,es){ return {de,en,es}; }
 function fmt(n){ return n.toFixed(1).replace('.', L==='en' ? '.' : ','); }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -884,12 +899,13 @@ function detectLang(text){
   const best = Object.keys(sc).sort((a,b)=>sc[b]-sc[a])[0];
   return sc[best] ? best : L;
 }
+function mmCode(l){ return l==='zh' ? 'zh-CN' : l; }
 function decodeEntities(s){ const ta = document.createElement('textarea'); ta.innerHTML = s; return ta.value; }
 // Kostenlose Übersetzung über MyMemory; liefert null, wenn nicht erreichbar oder Tageskontingent aufgebraucht
 async function translate(text, from, to){
   if(!text || from===to) return text;
   try{
-    const r = await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(String(text).slice(0,480))+'&langpair='+from+'|'+to);
+    const r = await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(String(text).slice(0,480))+'&langpair='+mmCode(from)+'|'+mmCode(to));
     const d = await r.json();
     const out = d && d.responseData && d.responseData.translatedText;
     if(!out || d.quotaFinished || String(d.responseStatus)!=='200' || /MYMEMORY WARNING|QUERY LENGTH LIMIT|INVALID LANGUAGE/i.test(out)) return null;
@@ -1406,10 +1422,10 @@ function applyStatic(){
   document.querySelectorAll('[data-flag]').forEach(el=>{ el.innerHTML = FLAGS[el.dataset.flag]; });
   document.getElementById('langBtnFlag').innerHTML = FLAGS[L];
   document.getElementById('langBtnText').textContent = LANG_NAMES[L];
-  document.querySelectorAll('.lopt').forEach(b=>{ const on = b.dataset.l===L; b.classList.toggle('on', on); b.querySelector('.chk').textContent = on?'✓':''; });
+  document.getElementById('langOpts').innerHTML = LANGS.filter(l=>l.ready).map(l=>`<button class="lopt ${l.code===L?'on':''}" data-l="${l.code}" onclick="setLang('${l.code}')"><span class="flag">${FLAGS[l.code]||''}</span>${l.name}<span class="chk">${l.code===L?'✓':''}</span></button>`).join('');
 }
 function setLang(l){
-  if(!STR[l]) return;
+  if(!READY_LANGS.includes(l)) return;
   L = l;
   try{ localStorage.setItem('ps_lang', l); }catch(e){}
   closeLangMenu();
