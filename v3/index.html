@@ -138,6 +138,12 @@
   .fgrid .yr input{width:100%}
   .fgrid label.cb{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:14px;padding-top:20px}
   .fshown{font-size:13px;color:var(--muted);margin:0 0 10px}
+  .actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+  .obtn{display:inline-flex;align-items:center;gap:6px;background:var(--btn);color:#fff;border-radius:8px;padding:7px 12px;font-size:14px;font-weight:600;text-decoration:none;border:0;cursor:pointer}
+  .obtn:hover{filter:brightness(1.08)}
+  .obtn.off{background:var(--soft2);color:var(--muted);cursor:default}
+  .dom{font-size:12px;color:var(--muted)}
+  .actions .wbtn{margin-top:0}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -810,6 +816,9 @@ Object.assign(STR.en, {f_h:'Filters', f_active:'Filters ({n} active)', f_year:'Y
 Object.assign(STR.es, {f_h:'Filtros', f_active:'Filtros ({n} activos)', f_year:'Año de publicación (desde – hasta)', f_oa:'Solo acceso abierto', f_min:'Puntuación mínima', f_sjr:'Cuartil SJR',
   f_any:'todos', f_sjr_missing:'Falta la lista SJR', f_lang:'Idioma del paper', f_reset:'Restablecer filtros',
   f_shown:'Se muestran {n} de {m} papers recomendados', f_none:'Ningún resultado con estos filtros. Suavízalos o restablécelos.'});
+Object.assign(STR.de, {open_btn:'Paper öffnen ↗', no_link:'Kein Link verfügbar', open_via:'öffnet {d}', open_free_via:'freie Version auf {d}'});
+Object.assign(STR.en, {open_btn:'Open paper ↗', no_link:'No link available', open_via:'opens {d}', open_free_via:'free version on {d}'});
+Object.assign(STR.es, {open_btn:'Abrir paper ↗', no_link:'Ningún enlace disponible', open_via:'abre {d}', open_free_via:'versión gratuita en {d}'});
 STR.zh = STR.zh || {};   // vorbereitet für Chinesisch
 Object.assign(STR.de, {ln_zh:'Chinesisch'}); Object.assign(STR.en, {ln_zh:'Chinese'}); Object.assign(STR.es, {ln_zh:'chino'});
 // Standardsprache: gespeicherte Wahl, sonst Browsersprache, sonst Englisch
@@ -1839,7 +1848,7 @@ function renderCheckResults(p){
         <p class="why">${rej ? `<span class="pill bad">${t(x.reason)}</span>` : `<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span>`} <span class="muted small">${t(x.via==='doi'?'chk_via_doi':'chk_via_title')}</span></p>
         ${scoreExplain(x)}
         <p class="src-line">${t('chk_input')} ${esc(l.line.length>140 ? l.line.slice(0,140)+'…' : l.line)}</p>
-        ${watchBtn(x)}
+        <div class="actions">${openBtn(x)}${watchBtn(x)}</div>
       </div>
       <div class="arrow">›</div>
     </div>`;
@@ -1916,7 +1925,7 @@ function renderResults(){
         <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> <span class="muted small">${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</span></p>
         ${fitLine(x)}
         ${scoreExplain(x)}
-        ${watchBtn(x)}
+        <div class="actions">${openBtn(x)}${watchBtn(x)}</div>
       </div>
       <div class="arrow">›</div>
     </div>`).join('');
@@ -1936,7 +1945,7 @@ function renderPaper(x){
   document.getElementById('pBadges').innerHTML = rej
     ? `<span class="pill bad">${t(x.reason)}</span>`
     : `<span class="pill good">${label(total(x))}</span><span class="pill neutral">${t(x.type)}</span><span class="pill neutral">${nText(x.n)}</span>${accBadge(x)}`;
-  document.getElementById('pWatch').innerHTML = watchBtn(x);
+  document.getElementById('pWatch').innerHTML = `<div class="actions">${openBtn(x)}${watchBtn(x)}</div>`;
   const a = document.getElementById('pDoi');
   a.textContent = x.doi ? t('open_orig',{doi:x.doi}) + (x.doiTarget ? ' · '+t('doi_target',{d:x.doiTarget}) : '') : t('no_doi');
   const lk = paperLink(x);
@@ -2085,6 +2094,13 @@ function toggleWatch(id, ev){
   const i = current.watch.indexOf(id);
   if(i >= 0){ current.watch.splice(i,1); toast(t('t_watch_removed')); } else { current.watch.push(id); toast(t('t_watch_added')); }
   saveProjects(); rerenderOpen(); if(document.querySelector('.screen.active').id==='watch') renderWatch();
+}
+/* Punkt 13: gut sichtbarer Button "Paper öffnen" mit Zieldomain */
+function openBtn(x){
+  if(!x.real) return '';
+  const lk = paperLink(x);
+  if(!lk) return `<span class="obtn off">${t('no_link')}</span>`;
+  return `<a class="obtn" href="${esc(lk.href)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${t('open_btn')}</a><span class="dom">${t(lk.kind==='oa'?'open_free_via':'open_via',{d:esc(lk.domain)})}</span>`;
 }
 function watchBtn(x){ if(!x.real) return ''; const on = inWatch(x); return `<button class="wbtn ${on?'on':''}" onclick="toggleWatch(${x.id}, event)">${t(on?'watch_in':'watch_add')}</button>`; }
 function watchedPapers(){ return current && current.watch ? current.watch.map(id=>current.papers.find(x=>x.id===id)).filter(Boolean) : []; }
