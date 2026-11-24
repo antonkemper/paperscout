@@ -97,6 +97,12 @@
   .cd-bar{height:6px;border-radius:999px;background:var(--soft2);overflow:hidden}
   .cd-bar i{display:block;height:100%}
   .cd-grid .v{text-align:right;font-weight:700;color:var(--ink)}
+  .wbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px}
+  .wbtn.on{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
+  .watchbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px}
+  .watchbar .btn{width:auto;padding:9px 14px;font-size:14px}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .btnrow .btn{width:auto;flex:1 1 180px;padding:11px 12px;font-size:14px;margin:0}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -251,6 +257,7 @@
         <p class="muted" style="margin:4px 0 2px" data-i18n="res_topic"></p>
         <p style="font-size:17px;font-weight:600;margin:0 0 8px" id="resQuery"></p>
         <div id="resTerms"></div>
+        <div class="watchbar" id="watchBar"></div>
         <div class="summary" id="resSummary"></div>
         <h2 id="resH"></h2>
         <div class="card soft" style="padding:10px 12px"><div class="small muted" id="resNote"></div></div>
@@ -273,6 +280,7 @@
             </div>
           </div>
           <p style="margin:12px 0 0"><a class="link" href="#" target="_blank" rel="noopener" id="pDoi"></a></p>
+          <div id="pWatch"></div>
         </div>
         <div id="pRejected"></div>
         <div id="pRatedBlock">
@@ -287,6 +295,19 @@
           <h2 data-i18n="h_cite"></h2>
           <div class="card"><div class="citation" id="pCite"></div><div style="height:10px"></div><button class="btn ghost" onclick="copyCite()" data-i18n="copy_cite"></button></div>
         </div>
+      </section>
+
+      <!-- ===== SCREEN 6: MEINE LISTE (Punkt 7) ===== -->
+      <section id="watch" class="screen">
+        <p style="font-size:20px;font-weight:700;margin:8px 0 2px" data-i18n="watch_h"></p>
+        <p class="muted" style="margin:0 0 6px" id="watchSub"></p>
+        <p class="small muted" style="margin:0 0 6px" data-i18n="watch_note"></p>
+        <div class="btnrow" id="watchActions">
+          <button class="btn primary" onclick="copyApa()" data-i18n="watch_copy"></button>
+          <button class="btn ghost" onclick="exportFile('bib')" data-i18n="watch_bib"></button>
+          <button class="btn ghost" onclick="exportFile('ris')" data-i18n="watch_ris"></button>
+        </div>
+        <div id="watchList"></div>
       </section>
 
       <!-- ===== SCREEN 5: VORAUSWAHL ===== -->
@@ -660,6 +681,31 @@ Object.assign(STR.es, {
   score_how:'Cómo se calcula el {n}', score_avg:'Total = media de los cinco criterios, redondeada: {n}/10'
 });
 
+Object.assign(STR.de, {
+  watch_add:'☆ Zu meiner Liste', watch_in:'★ In meiner Liste', watch_h:'Meine Liste', watch_btn:'Meine Liste ({n})',
+  watch_sub:'{n} Quellen aus „{p}“', watch_empty:'Noch nichts gemerkt. Tippe bei einem Treffer auf „Zu meiner Liste“.',
+  watch_copy:'Literaturangaben kopieren (APA)', watch_bib:'Als .bib exportieren', watch_ris:'Als .ris exportieren', watch_remove:'Entfernen',
+  watch_note:'Die Liste gehört zu diesem Projekt und bleibt in diesem Browser gespeichert, auch nach dem Neuladen.',
+  t_watch_added:'Zu deiner Liste hinzugefügt', t_watch_removed:'Aus der Liste entfernt', t_apa_copied:'Literaturangaben kopiert (APA)', t_export:'Datei {f} erstellt',
+  saved_hint:'Ergebnisse werden in diesem Browser gespeichert.'
+});
+Object.assign(STR.en, {
+  watch_add:'☆ Add to my list', watch_in:'★ In my list', watch_h:'My list', watch_btn:'My list ({n})',
+  watch_sub:'{n} sources from “{p}”', watch_empty:'Nothing saved yet. Tap “Add to my list” on a result.',
+  watch_copy:'Copy references (APA)', watch_bib:'Export as .bib', watch_ris:'Export as .ris', watch_remove:'Remove',
+  watch_note:'The list belongs to this project and stays saved in this browser, even after reloading.',
+  t_watch_added:'Added to your list', t_watch_removed:'Removed from the list', t_apa_copied:'References copied (APA)', t_export:'File {f} created',
+  saved_hint:'Results are saved in this browser.'
+});
+Object.assign(STR.es, {
+  watch_add:'☆ Añadir a mi lista', watch_in:'★ En mi lista', watch_h:'Mi lista', watch_btn:'Mi lista ({n})',
+  watch_sub:'{n} fuentes de «{p}»', watch_empty:'Aún no has guardado nada. Pulsa «Añadir a mi lista» en un resultado.',
+  watch_copy:'Copiar referencias (APA)', watch_bib:'Exportar como .bib', watch_ris:'Exportar como .ris', watch_remove:'Quitar',
+  watch_note:'La lista pertenece a este proyecto y se guarda en este navegador, también al recargar.',
+  t_watch_added:'Añadido a tu lista', t_watch_removed:'Quitado de la lista', t_apa_copied:'Referencias copiadas (APA)', t_export:'Archivo {f} creado',
+  saved_hint:'Los resultados se guardan en este navegador.'
+});
+
 let L = 'en';
 try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
 function t(key, vars){ let s = (STR[L][key] !== undefined ? STR[L][key] : STR.de[key]) || key; if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
@@ -975,6 +1021,8 @@ function fromWork(w){
     issns:[...new Set([src.issn_l, ...(src.issn||[])].filter(Boolean).map(x=>String(x).toUpperCase()))], country:''} : null;
   const p = {
     id: nextId++, real:true, oaId:w.id, status:'pass', source,
+    biblio:{volume:b.volume||'', issue:b.issue||'', first:b.first_page||'', last:b.last_page||''},
+    authorList:(w.authorships||[]).map(a=>a.author && a.author.display_name).filter(Boolean).slice(0,25),
     title: w.title || w.display_name || '—', authors: formatAuthors(w.authorships), journal, year: w.publication_year || '',
     doi, lang: w.language || '', type: TYPE_MAP[w.type] || 'ty_other', rawType:w.type, n:{key:'cited_n', n:w.cited_by_count||0},
     abstract: invertedToText(w.abstract_inverted_index), refIds:(w.referenced_works||[]).map(x=>x.replace('https://openalex.org/','')).slice(0,50),
@@ -1177,7 +1225,7 @@ async function searchReal(q, langs, excludeIds, boolExpr, info){
 /* =========================================================
    STATE
    ========================================================= */
-let projects = [PROJECT_SLEEP, PROJECT_HOME];
+let projects = [];   // v3: nur eigene Projekte, im Browser gespeichert (Punkt 7)
 let current = null, currentPaper = null, filter = 'all', history = [], running = false, runProgress = 0, shownLines = 0;
 
 function found(p){ return p.papers.length; }
@@ -1325,6 +1373,8 @@ async function runSearch(q, customTerms){
   await step(7, 5, 500);          // fertig
   running = false;
   document.getElementById('liveDot').classList.remove('busy');
+  proj.created = proj.created || Date.now(); proj.watch = proj.watch || [];
+  saveProjects();
   renderResults();
   show('results', false);
 }
@@ -1364,6 +1414,7 @@ async function extendSearch(){
   await step(7, 5, 500);
   running = false; p.extending = false; p.extended = true;
   document.getElementById('liveDot').classList.remove('busy');
+  saveProjects();
   renderResults();
   show('results', false);
 }
@@ -1471,6 +1522,8 @@ async function startCheck(){
   await step(7, 5, 400);
   running = false;
   document.getElementById('liveDot').classList.remove('busy');
+  proj.created = Date.now(); proj.watch = [];
+  saveProjects();
   renderResults();
   show('results', false);
 }
@@ -1517,6 +1570,7 @@ function renderCheckResults(p){
         <p class="why">${rej ? `<span class="pill bad">${t(x.reason)}</span>` : `<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span>`} <span class="muted small">${t(x.via==='doi'?'chk_via_doi':'chk_via_title')}</span></p>
         ${scoreExplain(x)}
         <p class="src-line">${t('chk_input')} ${esc(l.line.length>140 ? l.line.slice(0,140)+'…' : l.line)}</p>
+        ${watchBtn(x)}
       </div>
       <div class="arrow">›</div>
     </div>`;
@@ -1560,6 +1614,7 @@ function renderLog(p, shown){
    ========================================================= */
 function renderResults(){
   const p = current;
+  renderWatchBar(p);
   if(p.mode==='check') return renderCheckResults(p);
   document.getElementById('resH').textContent = t('res_h');
   document.getElementById('resQuery').textContent = tx(p.query);
@@ -1587,6 +1642,7 @@ function renderResults(){
         <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> <span class="muted small">${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</span></p>
         ${fitLine(x)}
         ${scoreExplain(x)}
+        ${watchBtn(x)}
       </div>
       <div class="arrow">›</div>
     </div>`).join('');
@@ -1605,6 +1661,7 @@ function renderPaper(x){
   document.getElementById('pBadges').innerHTML = rej
     ? `<span class="pill bad">${t(x.reason)}</span>`
     : `<span class="pill good">${label(total(x))}</span><span class="pill neutral">${t(x.type)}</span><span class="pill neutral">${nText(x.n)}</span>`;
+  document.getElementById('pWatch').innerHTML = watchBtn(x);
   const a = document.getElementById('pDoi');
   a.textContent = x.doi ? t('open_orig',{doi:x.doi}) + (x.doiTarget ? ' · '+t('doi_target',{d:x.doiTarget}) : '') : t('no_doi');
   if(x.doiStatus==='bad'){ a.textContent = t('r_doi')+': '+x.doi; a.removeAttribute('href'); a.onclick = ()=>false; }
@@ -1687,7 +1744,7 @@ function renderSide(){
   document.getElementById('archive').innerHTML = projects.map(pr=>`
     <div class="proj ${current&&pr.id===current.id?'on':''}" onclick="loadProject('${pr.id}')">
       <div class="ico">📁</div>
-      <div style="min-width:0"><div class="pt">${esc(titleOf(pr))}</div><div class="pd">${t('arch_meta',{d:t(pr.date), n:passed(pr).length, a:fmt(avg(pr))})}</div></div>
+      <div style="min-width:0"><div class="pt">${esc(titleOf(pr))}</div><div class="pd">${t('arch_meta',{d:dateLabel(pr), n:passed(pr).length, a:fmt(avg(pr))})}</div></div>
     </div>`).join('');
 }
 function loadProject(id){
@@ -1696,6 +1753,117 @@ function loadProject(id){
   history = []; runProgress = 5;
   renderResults();
   show('results', false);
+}
+
+/* =========================================================
+   SPEICHERN, MERKLISTE, EXPORT (Punkt 7)
+   ========================================================= */
+const STORE_KEY = 'ps3_projects';
+function dateLabel(pr){
+  if(!pr.created) return t(pr.date);
+  const d = new Date(pr.created), now = new Date();
+  return d.toDateString()===now.toDateString() ? t('today') : d.toLocaleDateString(L, {day:'numeric', month:'short', year:'numeric'});
+}
+function serializePaper(x){
+  const o = Object.assign({}, x);
+  delete o.authorIds; delete o.refIds;
+  if(typeof o.abstract==='string' && o.abstract.length > 3000) o.abstract = o.abstract.slice(0,3000)+' …';
+  if(o.rel) o.rel = Object.assign({}, o.rel, {missing:(o.rel.missing||[]).map(c=>c.label.en)});
+  return o;
+}
+function serializeProject(pr){
+  const o = Object.assign({}, pr, {papers: pr.papers.map(serializePaper)});
+  delete o.extending;
+  if(o.info){ o.info = Object.assign({}, o.info); if(o.info.cons) o.info.cons = {items:o.info.cons.items.map(c=>c.label.en), years:o.info.cons.years}; }
+  return o;
+}
+const consByLabel = l => CONSTRAINTS.find(c=>c.label.en===l);
+function reviveProject(o){
+  if(o.info && o.info.cons) o.info.cons = {items:(o.info.cons.items||[]).map(consByLabel).filter(Boolean), years:o.info.cons.years};
+  (o.papers||[]).forEach(x=>{ if(x.rel) x.rel.missing = (x.rel.missing||[]).map(consByLabel).filter(Boolean); x.authorIds = new Set(); x.refIds = []; });
+  o.watch = o.watch || [];
+  return o;
+}
+function saveProjects(){
+  const real = projects.filter(pr=>pr.live && !pr.offline).slice(0, 25);
+  for(let n = real.length; n > 0; n--){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(real.slice(0, n).map(serializeProject))); return; }
+    catch(e){ /* Speicher voll: ältere Projekte weglassen */ }
+  }
+}
+function loadProjects(){
+  try{
+    const arr = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+    projects = arr.map(reviveProject);
+    let maxId = 999; projects.forEach(pr=>pr.papers.forEach(x=>{ if(x.id > maxId) maxId = x.id; })); nextId = maxId + 1;
+  }catch(e){ projects = []; }
+}
+function inWatch(x){ return !!(current && current.watch && current.watch.includes(x.id)); }
+function toggleWatch(id, ev){
+  if(ev) ev.stopPropagation();
+  if(!current) return;
+  current.watch = current.watch || [];
+  const i = current.watch.indexOf(id);
+  if(i >= 0){ current.watch.splice(i,1); toast(t('t_watch_removed')); } else { current.watch.push(id); toast(t('t_watch_added')); }
+  saveProjects(); rerenderOpen(); if(document.querySelector('.screen.active').id==='watch') renderWatch();
+}
+function watchBtn(x){ if(!x.real) return ''; const on = inWatch(x); return `<button class="wbtn ${on?'on':''}" onclick="toggleWatch(${x.id}, event)">${t(on?'watch_in':'watch_add')}</button>`; }
+function watchedPapers(){ return current && current.watch ? current.watch.map(id=>current.papers.find(x=>x.id===id)).filter(Boolean) : []; }
+function renderWatchBar(p){
+  const el = document.getElementById('watchBar');
+  const n = (p.watch||[]).length;
+  el.innerHTML = p.live ? `<span class="small muted">${t('saved_hint')}</span><button class="btn ghost" onclick="openWatch()">${t('watch_btn',{n})}</button>` : '';
+}
+function openWatch(){ renderWatch(); show('watch'); }
+function renderWatch(){
+  const list = watchedPapers();
+  document.getElementById('watchSub').textContent = t('watch_sub',{n:list.length, p:titleOf(current)});
+  document.getElementById('watchActions').style.display = list.length ? '' : 'none';
+  document.getElementById('watchList').innerHTML = list.length ? list.map(x=>`
+    <div class="card"><div class="citation">${esc(apaCitation(x))}</div>
+    <button class="wbtn" onclick="toggleWatch(${x.id}, event)">${t('watch_remove')}</button></div>`).join('')
+    : `<div class="card soft"><div class="small muted">${t('watch_empty')}</div></div>`;
+}
+// APA 7: Nachname, V. V., …, & Nachname, V. (Jahr). Titel. Zeitschrift, Band(Heft), Seiten. https://doi.org/…
+function apaName2(n){ const parts = String(n).trim().split(/\s+/); if(parts.length<2) return n; const last = parts.pop(); return last+', '+parts.map(q=>q.split(/[.]/).filter(Boolean).map(c=>c[0].toUpperCase()+'.').join(' ')).join(' '); }
+function apaCitation(x){
+  const names = (x.authorList && x.authorList.length ? x.authorList : []).map(apaName2);
+  let au = names.length===0 ? x.authors : names.length===1 ? names[0] : names.length<=20 ? names.slice(0,-1).join(', ')+', & '+names[names.length-1] : names.slice(0,19).join(', ')+', … '+names[names.length-1];
+  const b = x.biblio || {}, jn = (x.source && x.source.name) || x.journal.split(',')[0];
+  let src = jn; if(b.volume) src += ', '+b.volume+(b.issue?'('+b.issue+')':''); if(b.first) src += ', '+b.first+(b.last?'–'+b.last:'');
+  return `${au} (${x.year}). ${String(x.title).replace(/\.$/,'')}. ${src}.` + (x.doi && x.doiStatus!=='bad' ? ` https://doi.org/${x.doi}` : '');
+}
+function copyApa(){
+  const txt = watchedPapers().map(apaCitation).sort((a,b)=>a.localeCompare(b)).join('\n\n');
+  try{ navigator.clipboard && navigator.clipboard.writeText(txt); }catch(e){}
+  toast(t('t_apa_copied'));
+}
+function bibKey(x, i){ const last = ((x.authorList&&x.authorList[0])||'paper').split(/\s+/).pop().normalize('NFKD').replace(/[^A-Za-z]/g,'') || 'paper'; return last.toLowerCase()+(x.year||'')+String.fromCharCode(97+(i%26)); }
+function bibEsc(v){ return String(v||'').replace(/[{}]/g,''); }
+function toBib(list){
+  return list.map((x,i)=>{
+    const b = x.biblio||{}, f = [['author',(x.authorList||[]).map(n=>{const p=n.split(/\s+/); const l=p.pop(); return l+', '+p.join(' ');}).join(' and ')],['title',x.title],['journal',(x.source&&x.source.name)||''],['year',x.year],['volume',b.volume],['number',b.issue],['pages',b.first?(b.first+(b.last?'--'+b.last:'')):''],['doi',x.doi],['publisher',x.source&&x.source.publisher]];
+    return '@article{'+bibKey(x,i)+',\n'+f.filter(e=>e[1]).map(e=>'  '+e[0]+' = {'+bibEsc(e[1])+'}').join(',\n')+'\n}';
+  }).join('\n\n');
+}
+function toRis(list){
+  return list.map(x=>{
+    const b = x.biblio||{}, L2 = ['TY  - JOUR'];
+    (x.authorList||[]).forEach(n=>{ const p = n.split(/\s+/); const l = p.pop(); L2.push('AU  - '+l+', '+p.join(' ')); });
+    L2.push('TI  - '+x.title); if(x.source&&x.source.name) L2.push('JO  - '+x.source.name); L2.push('PY  - '+x.year);
+    if(b.volume) L2.push('VL  - '+b.volume); if(b.issue) L2.push('IS  - '+b.issue); if(b.first) L2.push('SP  - '+b.first); if(b.last) L2.push('EP  - '+b.last);
+    if(x.doi) L2.push('DO  - '+x.doi); if(x.source&&x.source.publisher) L2.push('PB  - '+x.source.publisher);
+    L2.push('ER  - '); return L2.join('\r\n');
+  }).join('\r\n\r\n');
+}
+function exportFile(kind){
+  const list = watchedPapers(); if(!list.length) return;
+  const data = kind==='bib' ? toBib(list) : toRis(list);
+  const name = 'paperscout-'+(normText(titleOf(current)).replace(/\s+/g,'-').slice(0,40)||'liste')+'.'+kind;
+  const blob = new Blob([data], {type: kind==='bib' ? 'application/x-bibtex' : 'application/x-research-info-systems'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast(t('t_export',{f:name}));
 }
 
 /* =========================================================
@@ -1708,6 +1876,7 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove('show'), 1800);
 }
 placeLang();
+loadProjects();
 applyStatic();
 renderSide();
 </script>
