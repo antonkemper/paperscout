@@ -591,6 +591,22 @@ Object.assign(STR.es, {
   constraint_note:'Términos obligatorios: los resultados sin ellos bajan en la lista; el periodo filtra directamente.'
 });
 
+Object.assign(STR.de, {
+  l3:'Prüfe jedes Paper: Existiert es wirklich? Löst die DOI bei doi.org auf? Zurückgezogen? Ist es eine Studie? Hat es ein Quellenverzeichnis?',
+  r_doi:'DOI nicht auflösbar', rl_doi:'Die DOI {doi} führt bei doi.org ins Leere. Das Paper lässt sich darüber nicht nachweisen und wird deshalb nicht empfohlen.',
+  doi_target:'führt zu {d}', doi_unknown:'DOI konnte nicht geprüft werden', doi_ok:'DOI geprüft'
+});
+Object.assign(STR.en, {
+  l3:'Checking each paper: Does it really exist? Does the DOI resolve at doi.org? Retracted? Is it a study? Does it have a reference list?',
+  r_doi:'DOI does not resolve', rl_doi:'The DOI {doi} leads nowhere at doi.org. The paper cannot be verified this way and is therefore not recommended.',
+  doi_target:'leads to {d}', doi_unknown:'DOI could not be checked', doi_ok:'DOI verified'
+});
+Object.assign(STR.es, {
+  l3:'Comprobando cada paper: ¿Existe de verdad? ¿El DOI funciona en doi.org? ¿Retirado? ¿Es un estudio? ¿Tiene bibliografía?',
+  r_doi:'DOI no resoluble', rl_doi:'El DOI {doi} no lleva a ningún sitio en doi.org. El paper no se puede verificar así y por eso no se recomienda.',
+  doi_target:'lleva a {d}', doi_unknown:'No se pudo comprobar el DOI', doi_ok:'DOI comprobado'
+});
+
 let L = 'en';
 try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
 function t(key, vars){ let s = (STR[L][key] !== undefined ? STR[L][key] : STR.de[key]) || key; if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
@@ -925,6 +941,28 @@ function scoreFromRefs(p, refs){
   ];
   p.refs = {total:p.refCount, peer:Math.round(peerShare*p.refCount), median, bad:retracted, primary:Math.round(primary*100)+' %', self:Math.round(self*100)+' %'};
 }
+/* Punkt 4: DOI vor der Anzeige über doi.org prüfen; nicht auflösbar → aussortiert */
+async function checkDois(papers){
+  const list = papers.filter(p=>p.real && p.doi && !p.doiStatus);
+  let i = 0;
+  await Promise.all([0,1,2,3,4].map(async ()=>{
+    while(i < list.length){
+      const p = list[i++];
+      try{
+        const r = await fetch('https://doi.org/api/handles/'+encodeURI(p.doi)+'?type=URL');
+        const d = await r.json();
+        if(d.responseCode===1){
+          p.doiStatus = 'ok';
+          const v = (d.values||[]).find(x=>x.type==='URL');
+          if(v && v.data && v.data.value){ try{ p.doiTarget = new URL(v.data.value).hostname.replace(/^www\./,''); }catch(e){} }
+        }else if(d.responseCode===100){
+          p.doiStatus = 'bad';
+          if(p.status==='pass'){ p.status = 'rej'; p.reason = 'r_doi'; p.reasonLong = {key:'rl_doi', vars:{doi:p.doi}}; }
+        }else p.doiStatus = 'unknown';
+      }catch(e){ p.doiStatus = 'unknown'; }
+    }
+  }));
+}
 async function enrichRefs(p){
   if(p.status!=='pass' || !p.refIds.length) return;
   try{
@@ -1168,6 +1206,7 @@ async function runSearch(q, customTerms){
   await step(3, 2, 600);          // gefunden
   await step(4, 2, 300);          // Prüfung läuft
   if(proj.live){
+    await checkDois(proj.papers);
     const queue = proj.papers.filter(p=>p.status==='pass');
     let i = 0;
     await Promise.all([0,1,2,3].map(async ()=>{ while(i<queue.length){ const p = queue[i++]; await enrichRefs(p); } }));
@@ -1206,6 +1245,7 @@ async function extendSearch(){
   p.papers = p.papers.concat(added); p.addedCount = added.length;
   await step(3, 2, 600);
   await step(4, 2, 300);
+  await checkDois(added);
   const queue = added.filter(x=>x.status==='pass');
   let i = 0;
   await Promise.all([0,1,2,3].map(async ()=>{ while(i<queue.length){ const x = queue[i++]; await enrichRefs(x); } }));
@@ -1311,6 +1351,7 @@ async function startCheck(){
   if(errors === lines.length){ running = false; document.getElementById('liveDot').classList.remove('busy'); toast(t('l_offline')); projects = projects.filter(x=>x!==proj); current = null; show('start', false); return; }
   await step(3, 2, 500);
   await step(4, 2, 300);
+  await checkDois(proj.papers);
   const queue = proj.papers.filter(x=>x.status==='pass');
   let j = 0;
   await Promise.all([0,1,2,3].map(async ()=>{ while(j<queue.length){ const x = queue[j++]; await enrichRefs(x); } }));
@@ -1450,8 +1491,9 @@ function renderPaper(x){
     ? `<span class="pill bad">${t(x.reason)}</span>`
     : `<span class="pill good">${label(total(x))}</span><span class="pill neutral">${t(x.type)}</span><span class="pill neutral">${nText(x.n)}</span>`;
   const a = document.getElementById('pDoi');
-  a.textContent = x.doi ? t('open_orig',{doi:x.doi}) : t('no_doi');
-  if(x.real && x.doi){ a.href = 'https://doi.org/'+x.doi; a.onclick = null; }
+  a.textContent = x.doi ? t('open_orig',{doi:x.doi}) + (x.doiTarget ? ' · '+t('doi_target',{d:x.doiTarget}) : '') : t('no_doi');
+  if(x.doiStatus==='bad'){ a.textContent = t('r_doi')+': '+x.doi; a.removeAttribute('href'); a.onclick = ()=>false; }
+  else if(x.real && x.doi){ a.href = 'https://doi.org/'+x.doi; a.onclick = null; }
   else { a.href = '#'; a.onclick = ()=>{ toast(t('t_open')); return false; }; }
   document.getElementById('pRejected').innerHTML = rej ? `<div class="alert" style="margin-bottom:12px"><b>${t('why_out')}${t(x.reason)}</b>${esc(reasonLong(x))}<div style="margin-top:8px" class="small">${t('no_rating')}</div></div>` : '';
   document.getElementById('pRatedBlock').style.display = rej ? 'none' : 'block';
