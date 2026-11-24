@@ -103,6 +103,13 @@
   .watchbar .btn{width:auto;padding:9px 14px;font-size:14px}
   .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
   .btnrow .btn{width:auto;flex:1 1 180px;padding:11px 12px;font-size:14px;margin:0}
+  ul.sum{margin:6px 0 4px;padding-left:18px;font-size:14px;line-height:1.45}
+  ul.sum li{margin:0 0 3px}
+  ul.sum li b{font-weight:600}
+  .sum-note{font-size:12px;color:var(--muted);margin:2px 0 0}
+  .sum.pending ul.sum{opacity:.75}
+  details.abs-d{margin-top:10px;font-size:14px}
+  details.abs-d summary{cursor:pointer;color:var(--brand);font-weight:600}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -289,7 +296,7 @@
           <h2 data-i18n="h_why"></h2>
           <div class="card" id="pCrit"></div>
           <h2 data-i18n="h_about"></h2>
-          <div class="card"><p style="margin:0;font-size:15px" id="pAbstract"></p></div>
+          <div class="card"><div id="pSum"></div><details class="abs-d"><summary data-i18n="abs_full"></summary><p style="margin:8px 0 0;font-size:15px" id="pAbstract"></p></details></div>
           <h2 data-i18n="h_refs"></h2>
           <div class="card" id="pRefs"></div>
           <h2 data-i18n="h_cite"></h2>
@@ -706,6 +713,28 @@ Object.assign(STR.es, {
   saved_hint:'Los resultados se guardan en este navegador.'
 });
 
+Object.assign(STR.de, {
+  sum_aim:'Kernaussage', sum_meth:'Methode und Stichprobe', sum_res:'Wichtigstes Ergebnis', sum_rel:'Relevanz für deine Suche',
+  sum_rel_yes:'behandelt {t} direkt.', sum_rel_miss:'{c} kommt nicht vor.', sum_rel_weak:'nur inhaltlich ähnlich, ohne deine Suchbegriffe.',
+  sum_note:'Basierend auf dem Abstract · automatisch zusammengestellt (ohne KI)', sum_note_tr:' · maschinell in deine Sprache übersetzt (MyMemory)',
+  sum_note_trwait:' · wird übersetzt …', sum_note_trfail:' · Übersetzung gerade nicht verfügbar, daher Originalsprache',
+  sum_none:'Kein Abstract vorhanden, daher keine Zusammenfassung.', abs_full:'Ganzen Abstract anzeigen (Originalsprache)'
+});
+Object.assign(STR.en, {
+  sum_aim:'Main point', sum_meth:'Method and sample', sum_res:'Key finding', sum_rel:'Relevance to your search',
+  sum_rel_yes:'covers {t} directly.', sum_rel_miss:'{c} does not appear.', sum_rel_weak:'only similar in meaning, without your search terms.',
+  sum_note:'Based on the abstract · compiled automatically (no AI)', sum_note_tr:' · machine-translated into your language (MyMemory)',
+  sum_note_trwait:' · translating …', sum_note_trfail:' · translation currently unavailable, shown in the original language',
+  sum_none:'No abstract available, so no summary.', abs_full:'Show full abstract (original language)'
+});
+Object.assign(STR.es, {
+  sum_aim:'Idea principal', sum_meth:'Método y muestra', sum_res:'Resultado principal', sum_rel:'Relevancia para tu búsqueda',
+  sum_rel_yes:'trata {t} directamente.', sum_rel_miss:'{c} no aparece.', sum_rel_weak:'solo parecido en contenido, sin tus términos de búsqueda.',
+  sum_note:'Basado en el resumen · elaborado automáticamente (sin IA)', sum_note_tr:' · traducido automáticamente a tu idioma (MyMemory)',
+  sum_note_trwait:' · traduciendo …', sum_note_trfail:' · traducción no disponible ahora, se muestra en el idioma original',
+  sum_none:'No hay resumen disponible, por eso no hay síntesis.', abs_full:'Mostrar el resumen completo (idioma original)'
+});
+
 let L = 'en';
 try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
 function t(key, vars){ let s = (STR[L][key] !== undefined ? STR[L][key] : STR.de[key]) || key; if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
@@ -969,6 +998,91 @@ function scoreExplain(x){
   return `<p class="score-why">${t('score_line',{n})}</p>
     <details class="crit-d" onclick="event.stopPropagation()"><summary><span class="i">i</span>${t('score_how',{n})}</summary>
     <div class="cd-grid">${rows}<span class="ex" style="margin:2px 0 0">${t('score_avg',{n})}</span></div></details>`;
+}
+/* Punkt 8: Zusammenfassung in höchstens 4 Stichpunkten, aus dem Abstract, in der eingestellten Sprache */
+const CUES = {
+  aim: /\b(aim|aims|purpose|objective|this (study|paper|article|research)|we (examine|investigate|explore|analy[sz]e|study|test)|ziel|untersucht|untersuchen|diese (studie|arbeit)|objetivo|este (estudio|artículo|articulo|trabajo)|analiza|examina)/i,
+  method: /\b(survey|interview|experiment|sample|participants|respondents|questionnaire|data (from|of|were)|n\s*=|regression|meta-analy|case stud|longitudinal|qualitative|quantitative|panel|randomi[sz]ed|dataset|mixed.method|befragung|stichprobe|teilnehm|interviews|daten|fallstudie|encuesta|muestra|participantes|entrevistas|datos)/i,
+  result: /\b(results?|findings?|we find|found|show(s|ed)?|indicate[sd]?|reveal(s|ed)?|suggest(s|ed)?|significant(ly)?|ergebnis(se)?|zeigen|zeigt|belegen|resultados|muestran|indican|revelan)/i
+};
+function shortSentence(s, max){ s = s.trim(); if(s.length <= max) return s; const cut = s.slice(0, max); return cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:]$/,'')+' …'; }
+function buildSummary(x){
+  const abs = tx(x.abstract) || '';
+  if(abs.length < 80) return null;
+  const sents = (abs.replace(/\s+/g,' ').match(/[^.!?]+(?:[.!?](?!\d)|$)+/g) || []).map(q=>q.trim()).filter(q=>q.length > 30);
+  if(!sents.length) return null;
+  const used = [];
+  const aim = sents.find(q=>CUES.aim.test(q)) || sents[0]; used.push(aim);
+  const meth = sents.find(q=>CUES.method.test(q) && !used.includes(q)); if(meth) used.push(meth);
+  const res = sents.slice().reverse().find(q=>CUES.result.test(q) && !used.includes(q)) || sents.slice(1).reverse().find(q=>!used.includes(q));
+  return {aim:shortSentence(aim,150), meth:meth ? shortSentence(meth,150) : '', res:res ? shortSentence(res,150) : ''};
+}
+// Übersetzungen werden zwischengespeichert, damit das kostenlose Tageskontingent geschont wird
+const TR_KEY = 'ps3_tr'; let TRC = {}; try{ TRC = JSON.parse(localStorage.getItem(TR_KEY) || '{}'); }catch(e){}
+let trBlockedUntil = 0;
+async function trCached(text, from, to){
+  if(!text || from===to) return text;
+  const k = to+'|'+text; if(TRC[k]) return TRC[k];
+  if(Date.now() < trBlockedUntil) return null;
+  const r = await translate(text, from, to);
+  if(r===null){ trBlockedUntil = Date.now() + 60000; return null; }
+  TRC[k] = r; try{ localStorage.setItem(TR_KEY, JSON.stringify(TRC)); }catch(e){ TRC = {}; }
+  return r;
+}
+function srcLangOf(x){ const l = x.lang || detectLang(tx(x.abstract)||''); return (l||'en').slice(0,2); }
+function sumState(x){
+  x._sum = x._sum || {};
+  if(x._sum.src === undefined) x._sum.src = buildSummary(x);
+  return x._sum;
+}
+async function ensureSummaryLang(x){
+  const st = sumState(x); if(!st.src) return;
+  const from = srcLangOf(x); if(from === L) return;
+  st.tr = st.tr || {};
+  if(st.tr[L] || st.busy === L) return;
+  st.busy = L;
+  const parts = ['aim','meth','res'], out = {};
+  let ok = true;
+  for(const k of parts){ if(!st.src[k]){ out[k] = ''; continue; } const r = await trCached(st.src[k], from, L); if(r===null){ ok = false; break; } out[k] = r; }
+  st.busy = null;
+  if(ok) st.tr[L] = out; else st.fail = L;
+  document.querySelectorAll('.sum[data-pid="'+x.id+'"]').forEach(el=>{ el.outerHTML = sumBlock(x); });
+}
+function relBullet(x){
+  if(!x.rel) return '';
+  const hit = [...x.rel.inT, ...x.rel.inA];
+  let txt = hit.length ? t('sum_rel_yes',{t:hit.map(esc).join(', ')}) : t('sum_rel_weak');
+  if(x.rel.missing && x.rel.missing.length) txt += ' ' + t('sum_rel_miss',{c:x.rel.missing.map(c=>esc(constraintLabel(c))).join(', ')});
+  return `<li><b>${t('sum_rel')}:</b> ${txt}</li>`;
+}
+function sumBlock(x){
+  if(!x.real) return '';
+  const st = sumState(x);
+  if(!st.src) return `<div class="sum" data-pid="${x.id}"><p class="sum-note">${t('sum_none')}</p></div>`;
+  const from = srcLangOf(x), need = from !== L;
+  const tr = need && st.tr && st.tr[L];
+  const b = tr || st.src;
+  const pending = need && !tr && st.fail !== L;
+  const note = t('sum_note') + (need ? (tr ? t('sum_note_tr') : pending ? t('sum_note_trwait') : t('sum_note_trfail')) : '');
+  return `<div class="sum ${pending?'pending':''}" data-pid="${x.id}" data-need="${pending?1:0}"><ul class="sum">
+    <li><b>${t('sum_aim')}:</b> ${esc(b.aim)}</li>
+    ${b.meth ? `<li><b>${t('sum_meth')}:</b> ${esc(b.meth)}</li>` : ''}
+    ${b.res ? `<li><b>${t('sum_res')}:</b> ${esc(b.res)}</li>` : ''}
+    ${relBullet(x)}
+  </ul><p class="sum-note">${note}</p></div>`;
+}
+// Übersetzt nur Zusammenfassungen, die gerade sichtbar sind
+let sumObserver = null;
+function observeSummaries(){
+  if(sumObserver) sumObserver.disconnect();
+  const els = document.querySelectorAll('.sum[data-need="1"]');
+  if(!els.length) return;
+  const find = id => current && current.papers.find(x=>x.id===id);
+  if(!('IntersectionObserver' in window)){ els.forEach(el=>{ const x = find(+el.dataset.pid); if(x) ensureSummaryLang(x); }); return; }
+  sumObserver = new IntersectionObserver(entries=>{
+    entries.forEach(en=>{ if(en.isIntersecting){ sumObserver.unobserve(en.target); const x = find(+en.target.dataset.pid); if(x) ensureSummaryLang(x); } });
+  }, {rootMargin:'100px'});
+  els.forEach(el=>sumObserver.observe(el));
 }
 function fitLine(x){
   const r = x.rel; if(!r) return '';
@@ -1527,6 +1641,7 @@ async function startCheck(){
   renderResults();
   show('results', false);
 }
+function afterRender(){ setTimeout(observeSummaries, 0); }
 function renderTerms(p){
   const el = document.getElementById('resTerms');
   if(p.mode==='check' || !p.info){ el.innerHTML = ''; return; }
@@ -1567,6 +1682,7 @@ function renderCheckResults(p){
         <p class="title">${esc(x.title)}</p>
         <p class="meta">${esc(x.authors)}</p>
         ${journalLine(x)}${rankChips(x)}
+        ${rej ? '' : sumBlock(x)}
         <p class="why">${rej ? `<span class="pill bad">${t(x.reason)}</span>` : `<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span>`} <span class="muted small">${t(x.via==='doi'?'chk_via_doi':'chk_via_title')}</span></p>
         ${scoreExplain(x)}
         <p class="src-line">${t('chk_input')} ${esc(l.line.length>140 ? l.line.slice(0,140)+'…' : l.line)}</p>
@@ -1575,6 +1691,7 @@ function renderCheckResults(p){
       <div class="arrow">›</div>
     </div>`;
   }).join('');
+  afterRender();
 }
 
 function logLines(p){
@@ -1639,6 +1756,7 @@ function renderResults(){
         <p class="title">${esc(x.title)}</p>
         <p class="meta">${esc(x.authors)}</p>
         ${journalLine(x)}${rankChips(x)}
+        ${sumBlock(x)}
         <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> <span class="muted small">${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</span></p>
         ${fitLine(x)}
         ${scoreExplain(x)}
@@ -1646,6 +1764,7 @@ function renderResults(){
       </div>
       <div class="arrow">›</div>
     </div>`).join('');
+  afterRender();
 }
 
 /* =========================================================
@@ -1675,6 +1794,8 @@ function renderPaper(x){
       return `<div class="crit"><div class="top"><span>${t('c'+c)}</span><b>${s}/10</b></div><div class="bar"><i style="width:${s*10}%;background:${col}"></i></div><div class="exp">${t('c'+c+'e')}</div></div>`;
     }).join('') + `<div class="small muted" style="padding-top:10px">${t('total_line')} <b style="color:var(--ink)">${total(x)}/10</b></div>`;
     document.getElementById('pAbstract').textContent = tx(x.abstract) || t('no_abstract');
+    document.getElementById('pSum').innerHTML = x.real ? sumBlock(x) : `<p style="margin:0;font-size:15px">${esc(tx(x.abstract)||'')}</p>`;
+    if(x.real && srcLangOf(x)!==L) ensureSummaryLang(x);
     const sx = x.source || {}, v = vhbFor(x), q = sjrFor(x);
     const row = (k, val)=>`<div class="crit"><div class="top"><span>${k}</span><b>${val}</b></div></div>`;
     document.getElementById('pJournalCard').innerHTML = x.real ? (
