@@ -7,36 +7,36 @@
 <style>
   :root{
     color-scheme:light;
-    --bg:#f3f4f6; --card:#fff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
-    --soft:#f8fafc; --soft2:#f3f4f6; --inv:#fff;
-    --brand:#1d4ed8; --brand-soft:#dbeafe; --brand-line:#bfdbfe; --btn:#1d4ed8;
-    --good:#16a34a; --good-soft:#dcfce7; --good-ink:#166534;
-    --warn:#d97706; --warn-soft:#fef3c7; --warn-ink:#92400e;
-    --bad:#dc2626; --bad-soft:#fee2e2; --bad-ink:#991b1b; --bad-line:#fecaca;
-    --neutral-ink:#374151; --toast-bg:#111827; --toast-ink:#fff;
+    --bg:#f6f5f1; --card:#fff; --ink:#1d2330; --muted:#5d6470; --line:#e1ded6;
+    --soft:#faf9f6; --soft2:#eeebe4; --inv:#fff;
+    --brand:#24476b; --brand-soft:#e7edf3; --brand-line:#c5d3e2; --btn:#24476b;
+    --good:#2f6b3a; --good-soft:#e6efe5; --good-ink:#24532c;
+    --warn:#9a6b12; --warn-soft:#f5eedc; --warn-ink:#6b4a0b;
+    --bad:#a33a2f; --bad-soft:#f5e4e1; --bad-ink:#7a2a22; --bad-line:#e5c3bd;
+    --neutral-ink:#3c4350; --toast-bg:#1d2330; --toast-ink:#fff;
     --side-w:320px;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       color-scheme:dark;
-      --bg:#0f172a; --card:#1e293b; --ink:#e5e7eb; --muted:#9ca3af; --line:#334155;
-      --soft:#243044; --soft2:#334155; --inv:#0f172a;
-      --brand:#60a5fa; --brand-soft:#1e3a8a; --brand-line:#1d4ed8; --btn:#2563eb;
-      --good:#22c55e; --good-soft:#14532d; --good-ink:#bbf7d0;
-      --warn:#f59e0b; --warn-soft:#78350f; --warn-ink:#fde68a;
-      --bad:#ef4444; --bad-soft:#7f1d1d; --bad-ink:#fecaca; --bad-line:#991b1b;
-      --neutral-ink:#d1d5db; --toast-bg:#e5e7eb; --toast-ink:#111827;
+      --bg:#15181d; --card:#1d2128; --ink:#e6e4df; --muted:#a3a7ad; --line:#323741;
+      --soft:#20252d; --soft2:#2b3039; --inv:#15181d;
+      --brand:#9dbbd8; --brand-soft:#243445; --brand-line:#36506b; --btn:#3a628a;
+      --good:#7fb88a; --good-soft:#203325; --good-ink:#b9dcbf;
+      --warn:#d2a650; --warn-soft:#3a2f18; --warn-ink:#ead39c;
+      --bad:#d88276; --bad-soft:#3c2220; --bad-ink:#f0c2bb; --bad-line:#5c312c;
+      --neutral-ink:#cfcdc8; --toast-bg:#e6e4df; --toast-ink:#15181d;
     }
   }
   :root[data-theme="dark"]{
     color-scheme:dark;
-    --bg:#0f172a; --card:#1e293b; --ink:#e5e7eb; --muted:#9ca3af; --line:#334155;
-    --soft:#243044; --soft2:#334155; --inv:#0f172a;
-    --brand:#60a5fa; --brand-soft:#1e3a8a; --brand-line:#1d4ed8; --btn:#2563eb;
-    --good:#22c55e; --good-soft:#14532d; --good-ink:#bbf7d0;
-    --warn:#f59e0b; --warn-soft:#78350f; --warn-ink:#fde68a;
-    --bad:#ef4444; --bad-soft:#7f1d1d; --bad-ink:#fecaca; --bad-line:#991b1b;
-    --neutral-ink:#d1d5db; --toast-bg:#e5e7eb; --toast-ink:#111827;
+    --bg:#15181d; --card:#1d2128; --ink:#e6e4df; --muted:#a3a7ad; --line:#323741;
+    --soft:#20252d; --soft2:#2b3039; --inv:#15181d;
+    --brand:#9dbbd8; --brand-soft:#243445; --brand-line:#36506b; --btn:#3a628a;
+    --good:#7fb88a; --good-soft:#203325; --good-ink:#b9dcbf;
+    --warn:#d2a650; --warn-soft:#3a2f18; --warn-ink:#ead39c;
+    --bad:#d88276; --bad-soft:#3c2220; --bad-ink:#f0c2bb; --bad-line:#5c312c;
+    --neutral-ink:#cfcdc8; --toast-bg:#e6e4df; --toast-ink:#15181d;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);font-size:16px;line-height:1.45}
@@ -52,9 +52,9 @@
   @keyframes pulse{50%{opacity:.3}}
   .content{padding:16px;max-width:760px;width:100%;margin:0 auto;padding-bottom:80px}
   .screen{display:none}.screen.active{display:block}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;color:var(--ink)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;color:var(--ink)}
   .card.soft{background:var(--soft)}
-  .btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit}
+  .btn{display:block;width:100%;border:0;border-radius:8px;padding:13px;font-size:16px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit}
   .btn.primary{background:var(--btn);color:#fff}
   .btn.ghost{background:var(--card);border:1px solid var(--line);color:var(--ink)}
   .btn + .btn{margin-top:10px}
@@ -144,13 +144,39 @@
   .obtn.off{background:var(--soft2);color:var(--muted);cursor:default}
   .dom{font-size:12px;color:var(--muted)}
   .actions .wbtn{margin-top:0}
+  /* Punkt 14: ruhige Trefferkarte */
+  .serif,.pc-title,#pTitle,.outrow .ot{font-family:Charter,"Iowan Old Style",Georgia,"Times New Roman",serif}
+  .pc{padding:14px 16px}
+  .pc-top{display:flex;gap:14px;align-items:flex-start}
+  .pc-main{flex:1;min-width:0}
+  .pc-title{font-size:17px;line-height:1.3;font-weight:600;margin:0 0 4px}
+  .pc-title a{color:var(--ink);text-decoration:none}
+  .pc-title a:hover{text-decoration:underline}
+  .pc-meta{font-size:13px;color:var(--muted);margin:0 0 6px}
+  .pc .sum{margin:10px 0 0}
+  .pc .score-why{margin:8px 0 0}
+  details.more{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:13px}
+  details.more > summary{cursor:pointer;color:var(--muted);font-weight:600;list-style:none}
+  details.more > summary::-webkit-details-marker{display:none}
+  details.more > summary::before{content:'▸ '}
+  details.more[open] > summary::before{content:'▾ '}
+  .more-body{padding-top:6px}
+  .more-body p{margin:4px 0}
+  details.howd{margin-top:16px}
+  details.howd > summary,details.noted > summary{cursor:pointer;color:var(--brand);font-weight:600;font-size:14px}
+  details.noted{margin:0 0 12px}
+  .log .ln .ico{width:10px;display:flex;justify-content:center;padding-top:8px}
+  .log .ln .ico::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--brand)}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
   .pill.bad{background:var(--bad-soft);color:var(--bad-ink)}.pill.neutral{background:var(--soft2);color:var(--neutral-ink)}
   .score{width:44px;height:44px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:18px;line-height:1;flex:none;color:#fff}
   .score small{font-size:9px;font-weight:600;opacity:.9;margin-top:2px}
-  .s-high{background:#16a34a}.s-mid{background:#d97706}.s-low{background:#dc2626}.s-x{background:#9ca3af}
+  .s-high{background:var(--good-soft);color:var(--good-ink);box-shadow:inset 0 0 0 1.5px var(--good)}
+  .s-mid{background:var(--warn-soft);color:var(--warn-ink);box-shadow:inset 0 0 0 1.5px var(--warn)}
+  .s-low{background:var(--bad-soft);color:var(--bad-ink);box-shadow:inset 0 0 0 1.5px var(--bad)}
+  .s-x{background:var(--soft2);color:var(--muted);box-shadow:inset 0 0 0 1.5px var(--line)}
   .score.big{width:72px;height:72px;font-size:30px;border-radius:18px}
   .score.big small{font-size:11px}
   .row{display:flex;gap:12px;align-items:flex-start;cursor:pointer}
@@ -265,12 +291,12 @@
         <p class="muted" style="margin:0 0 14px" data-i18n="start_p"></p>
         <textarea id="query" data-i18n-ph="start_ph"></textarea>
         <div class="muted small" style="margin-top:10px" data-i18n="examples_l"></div>
-        <button class="chip" onclick="useExample(0)"><span>📱</span><span data-i18n="ex0"></span></button>
-        <button class="chip" onclick="useExample(1)"><span>💤</span><span data-i18n="ex1"></span></button>
-        <button class="chip" onclick="useExample(2)"><span>🏠</span><span data-i18n="ex2"></span></button>
+        <button class="chip" onclick="useExample(0)"><span data-i18n="ex0"></span></button>
+        <button class="chip" onclick="useExample(1)"><span data-i18n="ex1"></span></button>
+        <button class="chip" onclick="useExample(2)"><span data-i18n="ex2"></span></button>
         <div style="height:16px"></div>
         <button class="btn primary" onclick="startSearch()" data-i18n="search_btn"></button>
-        <div class="card soft" style="margin-top:16px"><div class="small muted" data-i18n="howto"></div></div>
+        <details class="howd"><summary data-i18n="how_sum"></summary><div class="card soft" style="margin-top:8px"><div class="small muted" data-i18n="howto"></div></div></details>
         </div>
         <div id="checkPane" style="display:none">
           <p style="font-size:22px;font-weight:700;margin:14px 0 4px" data-i18n="check_h"></p>
@@ -279,7 +305,7 @@
           <button class="chip" onclick="useCheckExample()"><span data-i18n="check_ex"></span></button>
           <div style="height:16px"></div>
           <button class="btn primary" onclick="startCheck()" data-i18n="check_btn"></button>
-          <div class="card soft" style="margin-top:16px"><div class="small muted" data-i18n="check_howto"></div></div>
+          <details class="howd"><summary data-i18n="how_sum"></summary><div class="card soft" style="margin-top:8px"><div class="small muted" data-i18n="check_howto"></div></div></details>
         </div>
       </section>
 
@@ -301,7 +327,7 @@
         <div class="watchbar" id="watchBar"></div>
         <div class="summary" id="resSummary"></div>
         <h2 id="resH"></h2>
-        <div class="card soft" style="padding:10px 12px"><div class="small muted" id="resNote"></div></div>
+        <details class="noted"><summary data-i18n="note_sum"></summary><div class="card soft" style="padding:10px 12px;margin-top:8px"><div class="small muted" id="resNote"></div></div></details>
         <div id="resExt"></div>
         <div class="sortbar" id="sortBar"><span data-i18n="sort_l"></span><select id="sortSel" onchange="sortMode=this.value;renderResults()"><option value="rel" data-i18n="sort_rel"></option><option value="score" data-i18n="sort_score"></option></select></div>
         <details class="filters" id="filterBox"><summary id="filterSum"></summary>
@@ -819,6 +845,15 @@ Object.assign(STR.es, {f_h:'Filtros', f_active:'Filtros ({n} activos)', f_year:'
 Object.assign(STR.de, {open_btn:'Paper öffnen ↗', no_link:'Kein Link verfügbar', open_via:'öffnet {d}', open_free_via:'freie Version auf {d}'});
 Object.assign(STR.en, {open_btn:'Open paper ↗', no_link:'No link available', open_via:'opens {d}', open_free_via:'free version on {d}'});
 Object.assign(STR.es, {open_btn:'Abrir paper ↗', no_link:'Ningún enlace disponible', open_via:'abre {d}', open_free_via:'versión gratuita en {d}'});
+Object.assign(STR.de, {how_sum:'So funktioniert PaperScout', note_sum:'Wie bewertet PaperScout? Score und Ranking erklärt',
+  watch_add:'Zu meiner Liste', watch_in:'✓ In meiner Liste', ext_btn:'Erweiterte Suche', sum_rel:'Passt, weil', more:'Details', all_details:'Alle Angaben, Abstract und Zitat ›',
+  score_line:'Score {n}/10 = Qualität der Quellen, die dieses Paper zitiert, nicht die Passung zu deinem Thema.'});
+Object.assign(STR.en, {how_sum:'How PaperScout works', note_sum:'How does PaperScout rate? Score and ranking explained',
+  watch_add:'Add to my list', watch_in:'✓ In my list', ext_btn:'Extended search', sum_rel:'Relevant because', more:'Details', all_details:'All details, abstract and citation ›',
+  score_line:'Score {n}/10 = quality of the sources this paper cites, not how well it fits your topic.'});
+Object.assign(STR.es, {how_sum:'Cómo funciona PaperScout', note_sum:'¿Cómo puntúa PaperScout? Puntuación y ranking explicados',
+  watch_add:'Añadir a mi lista', watch_in:'✓ En mi lista', ext_btn:'Búsqueda ampliada', sum_rel:'Encaja porque', more:'Detalles', all_details:'Todos los datos, resumen y cita ›',
+  score_line:'Puntuación {n}/10 = calidad de las fuentes que cita este paper, no lo bien que encaja con tu tema.'});
 STR.zh = STR.zh || {};   // vorbereitet für Chinesisch
 Object.assign(STR.de, {ln_zh:'Chinesisch'}); Object.assign(STR.en, {ln_zh:'Chinese'}); Object.assign(STR.es, {ln_zh:'chino'});
 // Standardsprache: gespeicherte Wahl, sonst Browsersprache, sonst Englisch
@@ -1087,6 +1122,44 @@ function relevanceOf(w, info, cons){
   return {score: best.score * factor, inT: best.inT, inA: best.inA, missing};
 }
 /* Punkt 6: Score erklären – Satz unter jedem Score + aufklappbare Kriterien */
+function scoreLine(x){ return x.status==='pass' ? `<p class="score-why">${t('score_line',{n:total(x)})}</p>` : ''; }
+function scoreGrid(x){
+  if(x.status!=='pass') return '';
+  const n = total(x);
+  const rows = [1,2,3,4,5].map((c,i)=>{
+    const v = x.scores[i], col = v>=8?'var(--good)':v>=5?'var(--warn)':'var(--bad)';
+    return `<span class="nm">${t('c'+c)}</span><span class="cd-bar"><i style="width:${v*10}%;background:${col}"></i></span><span class="v">${v}</span><span class="ex">${t('c'+c+'e')}</span>`;
+  }).join('');
+  return `<p style="margin:6px 0 0;font-weight:600;color:var(--ink)">${t('score_how',{n})}</p><div class="cd-grid">${rows}<span class="ex" style="margin:2px 0 0">${t('score_avg',{n})}</span></div>`;
+}
+// Einheitliche Trefferkarte: oben Titel, Score, Ranking, Zugang; darunter Stichpunkte; Rest einklappbar
+function resultCard(x, extra){
+  extra = extra || {};
+  const rej = x.status==='rej';
+  const jn = (x.source && x.source.name) || x.journal.split(',')[0];
+  const more = [
+    extra.input ? `<p>${t('chk_input')} ${esc(extra.input)}</p>` : '',
+    journalLine(x),
+    rej ? `<p><b>${t('why_out')}${t(x.reason)}</b> ${esc(reasonLong(x))}</p>` : `<p><span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> ${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</p>`,
+    scoreGrid(x),
+    `<p><a class="link" href="#" onclick="openPaper(${x.id});return false">${t('all_details')}</a></p>`
+  ].join('');
+  return `<article class="card pc">
+    <div class="pc-top">
+      ${rej ? `<div class="score s-x">✕<small>${t('out_short')}</small></div>` : badge(total(x))}
+      <div class="pc-main">
+        <h3 class="pc-title"><a href="#" onclick="openPaper(${x.id});return false">${esc(x.title)}</a></h3>
+        <p class="pc-meta">${esc(x.authors)} · ${esc(jn)} · ${esc(x.year)}${x.ext&&x.lang?` · ${esc(x.lang.toUpperCase())}`:''}${extra.via?` · ${extra.via}`:''}</p>
+        ${rankChips(x)}
+        ${rej ? `<p class="why"><span class="pill bad">${t(x.reason)}</span></p>` : ''}
+      </div>
+    </div>
+    ${rej ? '' : sumBlock(x)}
+    ${scoreLine(x)}
+    <div class="actions">${openBtn(x)}${watchBtn(x)}</div>
+    <details class="more"><summary>${t('more')}</summary><div class="more-body">${more}</div></details>
+  </article>`;
+}
 function scoreExplain(x){
   if(x.status!=='pass') return '';
   const n = total(x);
@@ -1149,9 +1222,11 @@ async function ensureSummaryLang(x){
 }
 function relBullet(x){
   if(!x.rel) return '';
-  const hit = [...x.rel.inT, ...x.rel.inA];
-  let txt = hit.length ? t('sum_rel_yes',{t:hit.map(esc).join(', ')}) : t('sum_rel_weak');
-  if(x.rel.missing && x.rel.missing.length) txt += ' ' + t('sum_rel_miss',{c:x.rel.missing.map(c=>esc(constraintLabel(c))).join(', ')});
+  const r = x.rel, parts = [];
+  if(r.inT.length) parts.push(t('fit_title',{t:r.inT.map(q=>esc(q)).join(', ')}));
+  if(r.inA.length) parts.push(t('fit_abs',{t:r.inA.map(q=>esc(q)).join(', ')}));
+  let txt = parts.length ? parts.join('; ') : t('fit_weak');
+  if(r.missing && r.missing.length) txt += `. <span style="color:var(--warn-ink)">${t('fit_missing',{t:r.missing.map(c=>esc(constraintLabel(c))).join(', ')})}</span>`;
   return `<li><b>${t('sum_rel')}:</b> ${txt}</li>`;
 }
 function sumBlock(x){
@@ -1829,29 +1904,12 @@ function renderCheckResults(p){
   document.getElementById('resQuery').textContent = t('chk_your',{n});
   document.getElementById('resH').textContent = t('chk_h');
   document.getElementById('resNote').innerHTML = t('res_note') + t('res_note_live') + ' ' + t('rank_note');
-  document.getElementById('resSummary').innerHTML = `
-    <div class="st"><div class="n">${n}</div><div class="l">${t('chk_in')}</div></div>
-    <div class="st"><div class="n" style="color:var(--good)">${f}</div><div class="l">${t('chk_found')}</div></div>
-    <div class="st"><div class="n" style="color:var(--bad)">${n-f}</div><div class="l">${t('chk_nf')}</div></div>`;
+  document.getElementById('resSummary').innerHTML = `<div style="grid-column:1/-1"><p class="hdr">${n} ${t('chk_in')} · <span class="ok">${f} ${t('chk_found')}</span> · <span class="out">${n-f} ${t('chk_nf')}</span></p></div>`;
   document.getElementById('resExt').innerHTML = '';
   document.getElementById('resList').innerHTML = p.lines.map(l=>{
     const x = l.pid ? p.papers.find(pp=>pp.id===l.pid) : null;
     if(!x) return `<div class="card"><p class="why" style="margin:0 0 6px"><span class="pill bad">${t('chk_nf_pill')}</span></p><p style="margin:0;font-size:15px">${esc(l.line)}</p><p class="src-line">${t('chk_nf_hint')}</p></div>`;
-    const rej = x.status==='rej';
-    return `<div class="card row" onclick="openPaper(${x.id})">
-      ${rej ? `<div class="score s-x">✕<small>${t('out_short')}</small></div>` : badge(total(x))}
-      <div class="body">
-        <p class="title">${esc(x.title)}</p>
-        <p class="meta">${esc(x.authors)}</p>
-        ${journalLine(x)}${rankChips(x)}
-        ${rej ? '' : sumBlock(x)}
-        <p class="why">${rej ? `<span class="pill bad">${t(x.reason)}</span>` : `<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span>`} <span class="muted small">${t(x.via==='doi'?'chk_via_doi':'chk_via_title')}</span></p>
-        ${scoreExplain(x)}
-        <p class="src-line">${t('chk_input')} ${esc(l.line.length>140 ? l.line.slice(0,140)+'…' : l.line)}</p>
-        <div class="actions">${openBtn(x)}${watchBtn(x)}</div>
-      </div>
-      <div class="arrow">›</div>
-    </div>`;
+    return resultCard(x, {via:t(x.via==='doi'?'chk_via_doi':'chk_via_title'), input:l.line.length>200 ? l.line.slice(0,200)+'…' : l.line});
   }).join('');
   afterRender();
 }
@@ -1884,7 +1942,7 @@ function renderLog(p, shown){
   const lines = logLines(p);
   const extra = p.offline ? 1 : 0;
   const visible = shown + (shown>=3 ? extra : 0);
-  document.getElementById('runLog').innerHTML = lines.map((l,i)=>`<div class="ln ${i<visible?'on':''}"><span class="ico">${l[0]}</span><span>${l[1]}</span></div>`).join('');
+  document.getElementById('runLog').innerHTML = lines.map((l,i)=>`<div class="ln ${i<visible?'on':''}"><span class="ico"></span><span>${l[1]}</span></div>`).join('');
   document.getElementById('runTitle').textContent = t('r'+Math.max(0, shown-1));
 }
 
@@ -1914,21 +1972,7 @@ function renderResults(){
   document.getElementById('sortSel').value = sortMode;
   const list = (hasRel && sortMode==='rel') ? rec.slice().sort((a,b)=>(b.rel?b.rel.score:0)-(a.rel?a.rel.score:0) || total(b)-total(a)) : rec;
   renderOut(p);
-  document.getElementById('resList').innerHTML = (!rec.length ? `<div class="card soft"><div class="small muted">${recAll.length ? t('f_none') : t('res_empty',{lang:langList(p.searchLangs||[p.lang||L])})}</div></div>` : '') + list.map(x=>`
-    <div class="card row" onclick="openPaper(${x.id})">
-      ${badge(total(x))}
-      <div class="body">
-        <p class="title">${esc(x.title)}</p>
-        <p class="meta">${esc(x.authors)}</p>
-        ${journalLine(x)}${rankChips(x)}
-        ${sumBlock(x)}
-        <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> <span class="muted small">${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</span></p>
-        ${fitLine(x)}
-        ${scoreExplain(x)}
-        <div class="actions">${openBtn(x)}${watchBtn(x)}</div>
-      </div>
-      <div class="arrow">›</div>
-    </div>`).join('');
+  document.getElementById('resList').innerHTML = (!rec.length ? `<div class="card soft"><div class="small muted">${recAll.length ? t('f_none') : t('res_empty',{lang:langList(p.searchLangs||[p.lang||L])})}</div></div>` : '') + list.map(x=>resultCard(x)).join('');
   afterRender();
 }
 
@@ -2031,7 +2075,6 @@ function renderSide(){
   document.getElementById('archCount').textContent = t('projects_n',{n:projects.length});
   document.getElementById('archive').innerHTML = projects.map(pr=>`
     <div class="proj ${current&&pr.id===current.id?'on':''}" onclick="loadProject('${pr.id}')">
-      <div class="ico">📁</div>
       <div style="min-width:0"><div class="pt">${esc(titleOf(pr))}</div><div class="pd">${t('arch_meta',{d:dateLabel(pr), n:recommended(pr).length, a:fmt(avg(pr))})}</div></div>
     </div>`).join('');
 }
