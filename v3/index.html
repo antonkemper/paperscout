@@ -167,6 +167,12 @@
   details.noted{margin:0 0 12px}
   .log .ln .ico{width:10px;display:flex;justify-content:center;padding-top:8px}
   .log .ln .ico::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--brand)}
+  .resume{border:1px solid var(--brand-line);background:var(--brand-soft);border-radius:10px;padding:12px 14px;margin:12px 0 4px}
+  .resume .rl{font-size:12px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.04em;margin:0 0 4px}
+  .resume .rt{font-size:15px;font-weight:600;margin:0 0 2px;color:var(--ink)}
+  .resume .rm{font-size:13px;color:var(--muted);margin:0 0 8px}
+  .resume .btnrow{margin:0}
+  .resume .btn{flex:0 1 auto;padding:8px 12px;font-size:14px}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -282,6 +288,7 @@
 
       <!-- ===== SCREEN 1: THEMA ===== -->
       <section id="start" class="screen active">
+        <div id="resume"></div>
         <div class="modes">
           <button class="mode on" data-mode="search" onclick="setMode('search')" data-i18n="mode_search"></button>
           <button class="mode" data-mode="check" onclick="setMode('check')" data-i18n="mode_check"></button>
@@ -854,6 +861,9 @@ Object.assign(STR.en, {how_sum:'How PaperScout works', note_sum:'How does PaperS
 Object.assign(STR.es, {how_sum:'Cómo funciona PaperScout', note_sum:'¿Cómo puntúa PaperScout? Puntuación y ranking explicados',
   watch_add:'Añadir a mi lista', watch_in:'✓ En mi lista', ext_btn:'Búsqueda ampliada', sum_rel:'Encaja porque', more:'Detalles', all_details:'Todos los datos, resumen y cita ›',
   score_line:'Puntuación {n}/10 = calidad de las fuentes que cita este paper, no lo bien que encaja con tu tema.'});
+Object.assign(STR.de, {resume_l:'Weiter, wo du aufgehört hast', resume_open:'Projekt öffnen', resume_reuse:'Thema für neue Suche übernehmen', resume_meta:'{d} · {n} empfohlen', resume_terms:'Suchbegriffe: {t}', resume_check:'Quellenprüfung mit {n} Quellen'});
+Object.assign(STR.en, {resume_l:'Continue where you left off', resume_open:'Open project', resume_reuse:'Use topic for a new search', resume_meta:'{d} · {n} recommended', resume_terms:'Search terms: {t}', resume_check:'Source check with {n} sources'});
+Object.assign(STR.es, {resume_l:'Sigue donde lo dejaste', resume_open:'Abrir proyecto', resume_reuse:'Usar el tema para una nueva búsqueda', resume_meta:'{d} · {n} recomendados', resume_terms:'Términos de búsqueda: {t}', resume_check:'Comprobación de {n} fuentes'});
 STR.zh = STR.zh || {};   // vorbereitet für Chinesisch
 Object.assign(STR.de, {ln_zh:'Chinesisch'}); Object.assign(STR.en, {ln_zh:'Chinese'}); Object.assign(STR.es, {ln_zh:'chino'});
 // Standardsprache: gespeicherte Wahl, sonst Browsersprache, sonst Englisch
@@ -1579,6 +1589,7 @@ function setLang(l){
   if(active==='paper' && currentPaper) renderPaper(currentPaper);
   if(active==='preselect') renderPreselect();
   if(active==='running' && current) renderLog(current, shownLines);
+  if(active==='start') renderResume();
   renderSide();
 }
 function toggleLangMenu(e){ e.stopPropagation(); document.getElementById('langWrap').classList.toggle('open'); }
@@ -1606,6 +1617,7 @@ function show(id, push=true){
   window.scrollTo(0,0);
   closeSide();
   renderSide();
+  if(id==='start') renderResume();
 }
 function goBack(){
   const active = document.querySelector('.screen.active').id;
@@ -2081,6 +2093,7 @@ function renderSide(){
 function loadProject(id){
   if(running) return;
   current = projects.find(p=>p.id===id);
+  if(current) setLast(id);
   history = []; runProgress = 5;
   renderResults();
   show('results', false);
@@ -2116,6 +2129,7 @@ function reviveProject(o){
   return o;
 }
 function saveProjects(){
+  if(current && current.live && !current.offline) setLast(current.id);
   const real = projects.filter(pr=>pr.live && !pr.offline).slice(0, 25);
   for(let n = real.length; n > 0; n--){
     try{ localStorage.setItem(STORE_KEY, JSON.stringify(real.slice(0, n).map(serializeProject))); return; }
@@ -2129,6 +2143,24 @@ function loadProjects(){
     let maxId = 999; projects.forEach(pr=>pr.papers.forEach(x=>{ if(x.id > maxId) maxId = x.id; })); nextId = maxId + 1;
   }catch(e){ projects = []; }
 }
+/* Punkt 15: letztes Projekt merken und auf der Startseite anbieten */
+const LAST_KEY = 'ps3_last';
+function setLast(id){ try{ localStorage.setItem(LAST_KEY, id); }catch(e){} }
+function renderResume(){
+  const el = document.getElementById('resume');
+  if(!projects.length){ el.innerHTML = ''; return; }
+  let lastId = null; try{ lastId = localStorage.getItem(LAST_KEY); }catch(e){}
+  const pr = projects.find(x=>x.id===lastId) || projects[0];
+  const topic = pr.mode==='check' ? t('resume_check',{n:pr.lines.length}) : tx(pr.query);
+  const terms = pr.mode!=='check' && pr.info ? shownTerms(pr) : [];
+  el.innerHTML = `<div class="resume">
+    <p class="rl">${t('resume_l')}</p>
+    <p class="rt">${esc(topic.length>140 ? topic.slice(0,140)+'…' : topic)}</p>
+    <p class="rm">${t('resume_meta',{d:dateLabel(pr), n:recommended(pr).length})}${terms.length ? ' · '+t('resume_terms',{t:esc(terms.join(', '))}) : ''}</p>
+    <div class="btnrow"><button class="btn primary" onclick="loadProject('${pr.id}')">${t('resume_open')}</button>${pr.mode!=='check' ? `<button class="btn ghost" onclick="reuseTopic('${pr.id}')">${t('resume_reuse')}</button>` : ''}</div>
+  </div>`;
+}
+function reuseTopic(id){ const pr = projects.find(x=>x.id===id); if(!pr) return; setMode('search'); qEl.value = tx(pr.query); qEl.focus(); }
 function inWatch(x){ return !!(current && current.watch && current.watch.includes(x.id)); }
 function toggleWatch(id, ev){
   if(ev) ev.stopPropagation();
@@ -2217,6 +2249,7 @@ placeLang();
 loadProjects();
 applyStatic();
 renderSide();
+renderResume();
 </script>
 </body>
 </html>
