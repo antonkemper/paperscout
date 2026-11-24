@@ -126,6 +126,18 @@
   .acc.free{background:var(--good-soft);color:var(--good-ink)}
   .acc.closed{background:var(--warn-soft);color:var(--warn-ink)}
   .acc.unk{background:var(--soft2);color:var(--muted)}
+  details.filters{margin:0 0 12px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+  details.filters > summary{cursor:pointer;padding:10px 12px;font-weight:600;font-size:14px;list-style:none}
+  details.filters > summary::-webkit-details-marker{display:none}
+  details.filters > summary::before{content:'▸ ';color:var(--muted)}
+  details.filters[open] > summary::before{content:'▾ '}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;padding:0 12px 12px}
+  .fgrid label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+  .fgrid input[type=number],.fgrid select{border:1px solid var(--line);border-radius:8px;padding:7px 8px;font:inherit;font-size:14px;background:var(--card);color:var(--ink);min-width:0}
+  .fgrid .yr{display:flex;gap:6px;align-items:center}
+  .fgrid .yr input{width:100%}
+  .fgrid label.cb{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:14px;padding-top:20px}
+  .fshown{font-size:13px;color:var(--muted);margin:0 0 10px}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -286,6 +298,17 @@
         <div class="card soft" style="padding:10px 12px"><div class="small muted" id="resNote"></div></div>
         <div id="resExt"></div>
         <div class="sortbar" id="sortBar"><span data-i18n="sort_l"></span><select id="sortSel" onchange="sortMode=this.value;renderResults()"><option value="rel" data-i18n="sort_rel"></option><option value="score" data-i18n="sort_score"></option></select></div>
+        <details class="filters" id="filterBox"><summary id="filterSum"></summary>
+          <div class="fgrid">
+            <label><span data-i18n="f_year"></span><span class="yr"><input type="number" id="fYFrom" min="1900" max="2100" oninput="setFilt('yFrom',this.value)"><span>–</span><input type="number" id="fYTo" min="1900" max="2100" oninput="setFilt('yTo',this.value)"></span></label>
+            <label><span data-i18n="f_min"></span><select id="fMin" onchange="setFilt('min',+this.value)"></select></label>
+            <label><span data-i18n="f_sjr"></span><select id="fSjr" onchange="setFilt('sjr',this.value)"></select></label>
+            <label><span data-i18n="f_lang"></span><select id="fLang" onchange="setFilt('lang',this.value)"></select></label>
+            <label class="cb"><input type="checkbox" id="fOa" onchange="setFilt('oa',this.checked)"><span data-i18n="f_oa"></span></label>
+            <label class="cb" style="padding-top:14px"><button class="linkbtn" onclick="resetFilt();return false" data-i18n="f_reset"></button></label>
+          </div>
+        </details>
+        <p class="fshown" id="fShown"></p>
         <div id="resList"></div>
         <div id="resOut"></div>
         <button class="btn ghost" onclick="openPreselect('all')" data-i18n="res_pre_btn"></button>
@@ -778,6 +801,15 @@ Object.assign(STR.es, {
 Object.assign(STR.de, {oa_free:'Frei zugänglich', oa_closed:'Login/Paywall möglich', oa_unknown:'Zugang unbekannt', oa_open:'Frei zugängliche Version öffnen ↗', acc_l:'Zugang:'});
 Object.assign(STR.en, {oa_free:'Open access', oa_closed:'Login/paywall possible', oa_unknown:'Access unknown', oa_open:'Open free version ↗', acc_l:'Access:'});
 Object.assign(STR.es, {oa_free:'Acceso abierto', oa_closed:'Posible login/muro de pago', oa_unknown:'Acceso desconocido', oa_open:'Abrir la versión gratuita ↗', acc_l:'Acceso:'});
+Object.assign(STR.de, {f_h:'Filter', f_active:'Filter ({n} aktiv)', f_year:'Erscheinungsjahr (von – bis)', f_oa:'Nur frei zugänglich', f_min:'Mindest-Score', f_sjr:'SJR-Quartil',
+  f_any:'alle', f_sjr_missing:'SJR-Liste fehlt noch', f_lang:'Sprache des Papers', f_reset:'Filter zurücksetzen',
+  f_shown:'{n} von {m} empfohlenen Papers angezeigt', f_none:'Keine Treffer mit diesen Filtern. Lockere die Filter oder setze sie zurück.'});
+Object.assign(STR.en, {f_h:'Filters', f_active:'Filters ({n} active)', f_year:'Year of publication (from – to)', f_oa:'Open access only', f_min:'Minimum score', f_sjr:'SJR quartile',
+  f_any:'all', f_sjr_missing:'SJR list still missing', f_lang:'Language of the paper', f_reset:'Reset filters',
+  f_shown:'Showing {n} of {m} recommended papers', f_none:'No results with these filters. Loosen or reset them.'});
+Object.assign(STR.es, {f_h:'Filtros', f_active:'Filtros ({n} activos)', f_year:'Año de publicación (desde – hasta)', f_oa:'Solo acceso abierto', f_min:'Puntuación mínima', f_sjr:'Cuartil SJR',
+  f_any:'todos', f_sjr_missing:'Falta la lista SJR', f_lang:'Idioma del paper', f_reset:'Restablecer filtros',
+  f_shown:'Se muestran {n} de {m} papers recomendados', f_none:'Ningún resultado con estos filtros. Suavízalos o restablécelos.'});
 STR.zh = STR.zh || {};   // vorbereitet für Chinesisch
 Object.assign(STR.de, {ln_zh:'Chinesisch'}); Object.assign(STR.en, {ln_zh:'Chinese'}); Object.assign(STR.es, {ln_zh:'chino'});
 // Standardsprache: gespeicherte Wahl, sonst Browsersprache, sonst Englisch
@@ -925,6 +957,12 @@ async function understandQuery(q){
   let en = null, enTerms = [];
   if(lang==='en'){ en = q; enTerms = origTerms; }
   else { en = await translate(q, lang, 'en'); if(en) enTerms = extractKeywords(en); }
+  // Ändert die Übersetzung nichts, war die Eingabe schon englisch
+  if(lang!=='en' && en){
+    const ws = arr => new Set(arr.join(' ').split(' ').filter(Boolean));
+    const A = ws(origTerms), B = ws(enTerms), inter = [...A].filter(w=>B.has(w)).length, uni = new Set([...A, ...B]).size;
+    if(uni && inter/uni >= .75) return {lang:'en', origTerms, en:q, enTerms:origTerms, translated:false};
+  }
   return {lang, origTerms, en, enTerms, translated: lang!=='en' && !!en};
 }
 /* Punkt 3: Einschränkungen erkennen (Region, Zielgruppe, Branche, Zeitraum) und Relevanz berechnen */
@@ -1712,6 +1750,40 @@ async function startCheck(){
   show('results', false);
 }
 function afterRender(){ setTimeout(observeSummaries, 0); }
+/* Punkt 12: Filter wirken sofort auf die empfohlenen Papers, ohne neue Suche */
+const FILT0 = {yFrom:'', yTo:'', oa:false, min:5, sjr:'', lang:''};
+function filt(){ if(!current) return FILT0; current.flt = Object.assign({}, FILT0, current.flt||{}); return current.flt; }
+function setFilt(k, v){ filt()[k] = v; saveProjects(); renderResults(); }
+function resetFilt(){ if(current){ current.flt = Object.assign({}, FILT0); saveProjects(); renderResults(); } }
+function activeFilters(f){ return [f.yFrom, f.yTo, f.oa, f.min>5, f.sjr, f.lang].filter(Boolean).length; }
+function langName(c){ try{ return new Intl.DisplayNames([L], {type:'language'}).of(c); }catch(e){ return c; } }
+function applyFilt(list){
+  const f = filt();
+  return list.filter(x=>{
+    if(f.yFrom && x.year < +f.yFrom) return false;
+    if(f.yTo && x.year > +f.yTo) return false;
+    if(f.oa && !(x.oa && x.oa.is)) return false;
+    if(total(x) < f.min) return false;
+    if(f.sjr){ const q = sjrFor(x); if(!q || +q[1] > +f.sjr) return false; }
+    if(f.lang && (x.lang||'') !== f.lang) return false;
+    return true;
+  });
+}
+function renderFilters(p, rec){
+  const box = document.getElementById('filterBox');
+  if(p.mode==='check' || !p.live){ box.style.display = 'none'; document.getElementById('fShown').textContent = ''; return; }
+  box.style.display = '';
+  const f = filt(), n = activeFilters(f);
+  document.getElementById('filterSum').textContent = n ? t('f_active',{n}) : t('f_h');
+  document.getElementById('fYFrom').value = f.yFrom; document.getElementById('fYTo').value = f.yTo;
+  document.getElementById('fOa').checked = !!f.oa;
+  document.getElementById('fMin').innerHTML = [5,6,7,8,9,10].map(v=>`<option value="${v}" ${f.min===v?'selected':''}>${v}+</option>`).join('');
+  const sj = document.getElementById('fSjr');
+  sj.disabled = SJR===null;
+  sj.innerHTML = SJR===null ? `<option value="">${t('f_sjr_missing')}</option>` : [['',t('f_any')],['1','Q1'],['2','Q1–Q2'],['3','Q1–Q3'],['4','Q1–Q4']].map(o=>`<option value="${o[0]}" ${f.sjr===o[0]?'selected':''}>${o[1]}</option>`).join('');
+  const langs = [...new Set(rec.map(x=>x.lang).filter(Boolean))].sort();
+  document.getElementById('fLang').innerHTML = `<option value="">${t('f_any')}</option>` + langs.map(c=>`<option value="${c}" ${f.lang===c?'selected':''}>${esc(langName(c))}</option>`).join('');
+}
 function renderOut(p){
   const out = removedAll(p);
   document.getElementById('resOut').innerHTML = out.length ? `<details class="outd"><summary>${t('out_h',{n:out.length})}</summary><div class="outlist">${out.map(x=>`
@@ -1739,6 +1811,8 @@ function researchTerms(){
   runSearch(tx(current.query), v.slice(0,8));
 }
 function renderCheckResults(p){
+  document.getElementById('filterBox').style.display = 'none';
+  document.getElementById('fShown').textContent = '';
   document.getElementById('resTerms').innerHTML = '';
   document.getElementById('resOut').innerHTML = '';
   document.getElementById('sortBar').style.display = 'none';
@@ -1822,13 +1896,16 @@ function renderResults(){
   document.getElementById('resExt').innerHTML = (!p.live || (!p.extended && !others.length)) ? '' : (p.extended
     ? `<p class="small muted ext-note">${t('ext_done',{n:p.addedCount||0, langs:langList(p.extLangs||others)})}</p>`
     : `<button class="btn ext" onclick="extendSearch()">${t('ext_btn')}</button><p class="small muted ext-note">${t('ext_hint',{langs:langList(others)})}</p>`);
-  const rec = recommended(p);
+  const recAll = recommended(p);
+  renderFilters(p, recAll);
+  const rec = applyFilt(recAll);
+  document.getElementById('fShown').textContent = activeFilters(filt()) ? t('f_shown',{n:rec.length, m:recAll.length}) : '';
   const hasRel = rec.some(x=>x.rel);
   document.getElementById('sortBar').style.display = hasRel ? '' : 'none';
   document.getElementById('sortSel').value = sortMode;
   const list = (hasRel && sortMode==='rel') ? rec.slice().sort((a,b)=>(b.rel?b.rel.score:0)-(a.rel?a.rel.score:0) || total(b)-total(a)) : rec;
   renderOut(p);
-  document.getElementById('resList').innerHTML = (!rec.length ? `<div class="card soft"><div class="small muted">${t('res_empty',{lang:langList(p.searchLangs||[p.lang||L])})}</div></div>` : '') + list.map(x=>`
+  document.getElementById('resList').innerHTML = (!rec.length ? `<div class="card soft"><div class="small muted">${recAll.length ? t('f_none') : t('res_empty',{lang:langList(p.searchLangs||[p.lang||L])})}</div></div>` : '') + list.map(x=>`
     <div class="card row" onclick="openPaper(${x.id})">
       ${badge(total(x))}
       <div class="body">
