@@ -75,6 +75,12 @@
   .terms-edit.open{display:flex}
   .terms-edit input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:14px;background:var(--card);color:var(--ink)}
   .terms-edit .btn{width:auto;padding:9px 14px;font-size:14px}
+  .fit{font-size:13px;color:var(--muted);margin:6px 0 0}
+  .fit b{color:var(--ink);font-weight:600}
+  .fit.warn{color:var(--warn-ink)}
+  .term.c{background:var(--warn-soft);color:var(--warn-ink)}
+  .sortbar{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;color:var(--muted)}
+  .sortbar select{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;background:var(--card);color:var(--ink)}
   .chip{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;cursor:pointer;color:var(--ink);display:flex;gap:8px;width:100%;margin-top:8px;font-family:inherit}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
   .pill.good{background:var(--good-soft);color:var(--good-ink)}.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
@@ -233,6 +239,7 @@
         <h2 id="resH"></h2>
         <div class="card soft" style="padding:10px 12px"><div class="small muted" id="resNote"></div></div>
         <div id="resExt"></div>
+        <div class="sortbar" id="sortBar"><span data-i18n="sort_l"></span><select id="sortSel" onchange="sortMode=this.value;renderResults()"><option value="rel" data-i18n="sort_rel"></option><option value="score" data-i18n="sort_score"></option></select></div>
         <div id="resList"></div>
         <button class="btn ghost" onclick="openPreselect('all')" data-i18n="res_pre_btn"></button>
       </section>
@@ -562,6 +569,28 @@ Object.assign(STR.es, {
 });
 STR.de.tr_from = ' · aus dem {lang} übersetzt'; STR.en.tr_from = ' · translated from {lang}'; STR.es.tr_from = ' · traducido del {lang}';
 
+Object.assign(STR.de, {
+  fit_because:'Passt, weil: {t}', fit_title:'{t} im Titel', fit_abs:'{t} im Abstract', fit_missing:'Achtung: {t} kommt in Titel und Abstract nicht vor',
+  fit_weak:'Nur inhaltlich ähnlich, keine Suchbegriffe in Titel oder Abstract',
+  c_region:'Region', c_group:'Zielgruppe', c_industry:'Branche', c_years:'Zeitraum', years_from:'ab {a}', years_to:'bis {b}', years_range:'{a}–{b}',
+  sort_l:'Sortieren nach', sort_rel:'Passung zum Thema', sort_score:'Score (Qualität der Quellen)',
+  constraint_note:'Pflichtbegriffe: Treffer ohne sie werden nach unten sortiert, der Zeitraum filtert direkt.'
+});
+Object.assign(STR.en, {
+  fit_because:'Relevant because: {t}', fit_title:'{t} in the title', fit_abs:'{t} in the abstract', fit_missing:'Note: {t} does not appear in title or abstract',
+  fit_weak:'Only similar in meaning, no search terms in title or abstract',
+  c_region:'Region', c_group:'Target group', c_industry:'Industry', c_years:'Period', years_from:'from {a}', years_to:'until {b}', years_range:'{a}–{b}',
+  sort_l:'Sort by', sort_rel:'Relevance to topic', sort_score:'Score (quality of sources)',
+  constraint_note:'Required terms: results without them are moved down, the period filters directly.'
+});
+Object.assign(STR.es, {
+  fit_because:'Encaja porque: {t}', fit_title:'{t} en el título', fit_abs:'{t} en el resumen', fit_missing:'Atención: {t} no aparece en el título ni en el resumen',
+  fit_weak:'Solo parecido en contenido, ningún término de búsqueda en título o resumen',
+  c_region:'Región', c_group:'Grupo', c_industry:'Sector', c_years:'Periodo', years_from:'desde {a}', years_to:'hasta {b}', years_range:'{a}–{b}',
+  sort_l:'Ordenar por', sort_rel:'Relevancia para el tema', sort_score:'Puntuación (calidad de las fuentes)',
+  constraint_note:'Términos obligatorios: los resultados sin ellos bajan en la lista; el periodo filtra directamente.'
+});
+
 let L = 'en';
 try{ const s = localStorage.getItem('ps_lang'); if(s && STR[s]) L = s; }catch(e){}
 function t(key, vars){ let s = (STR[L][key] !== undefined ? STR[L][key] : STR.de[key]) || key; if(vars) for(const k in vars) s = s.split('{'+k+'}').join(vars[k]); return s; }
@@ -657,7 +686,8 @@ function extractTerms(q){
   return out.length ? out : q.split(/\s+/).slice(0,5);
 }
 /* Punkt 2: Kernbegriffe aus ganzen Sätzen, Sprache erkennen, ins Englische übersetzen */
-const STOP2 = new Set(('affect affects affected affecting change changes changing improve improves increase increases reduce reduces impact influence ability abilities capacity level levels use usage way ways people role relationship relation study studies research analysis review effect effects among between using based toward towards within during into also their they them have has had was were been being this that these those with from more most such some other than then very will would could should can may might about over under after before because while where when which who whom whose what how why need want looking find search recent current new latest articles article thesis dissertation write writing bachelor bachelors master term seminar topic work works empirical evidence regarding concerning '+
+const STOP2 = new Set(('since seit desde last past letzten vergangenen ultimos últimos years jahre jahren años anos before until bis hasta after nach '+
+  'affect affects affected affecting change changes changing improve improves increase increases reduce reduces impact influence ability abilities capacity level levels use usage way ways people role relationship relation study studies research analysis review effect effects among between using based toward towards within during into also their they them have has had was were been being this that these those with from more most such some other than then very will would could should can may might about over under after before because while where when which who whom whose what how why need want looking find search recent current new latest articles article thesis dissertation write writing bachelor bachelors master term seminar topic work works empirical evidence regarding concerning '+
   'auswirkungen auswirkung rolle zusammenhang zwischen bei durch unter nach vor bezug hinblick bereich neue neuesten aktuellen aktuell möchte will suche suchen finden meiner einer eines dem des sich auch als wird werden wurde hat haben kann können sowie bzw schreibe schreiben empirische '+
   'impacto influencia papel relación entre sobre para como cómo estudio estudios trabajo escribiendo escribo necesito busco reciente recientes tesis tfg tfm efecto efectos del las los una unos unas que qué por con sin sus mis acerca').split(' '));
 function isStopWord(w){ return w.length < 3 || STOP.has(w) || STOP2.has(w); }
@@ -666,7 +696,7 @@ function extractKeywords(text){
   const words = String(text||'').toLowerCase().replace(/[’']s\b/g,'').replace(/[^\p{L}\p{N}\s-]/gu,' ').split(/\s+/).filter(Boolean);
   const out = []; let run = [];
   const flush = ()=>{ if(run.length===2) out.push(run.join(' ')); else run.forEach(w=>out.push(w)); run = []; };
-  for(const w of words){ if(isStopWord(w)) flush(); else run.push(w); }
+  for(const w of words){ if(isStopWord(w) || /^\d+$/.test(w)) flush(); else run.push(w); }
   flush();
   return [...new Set(out)].slice(0,6);
 }
@@ -701,6 +731,128 @@ async function understandQuery(q){
   else { en = await translate(q, lang, 'en'); if(en) enTerms = extractKeywords(en); }
   return {lang, origTerms, en, enTerms, translated: lang!=='en' && !!en};
 }
+/* Punkt 3: Einschränkungen erkennen (Region, Zielgruppe, Branche, Zeitraum) und Relevanz berechnen */
+// [Typ, Englisch, Deutsch, Spanisch, Varianten (klein, ohne Akzente)…]
+const CONSTRAINTS = [
+  ['region','Austria','Österreich','Austria','austria','austrian','osterreich','osterreichs','osterreichische','osterreichischen','austriaco','austriaca','vienna','wien','viena'],
+  ['region','Germany','Deutschland','Alemania','germany','deutschland','deutschen unternehmen','alemania','aleman','alemana','bundesrepublik'],
+  ['region','Switzerland','Schweiz','Suiza','switzerland','swiss','schweiz','schweizer','schweizerischen','suiza','suizo','suiza'],
+  ['region','North Rhine-Westphalia','Nordrhein-Westfalen','Renania del Norte-Westfalia','north rhine westphalia','nrw','nordrhein westfalen','renania del norte westfalia'],
+  ['region','Bavaria','Bayern','Baviera','bavaria','bavarian','bayern','bayerischen','baviera'],
+  ['region','France','Frankreich','Francia','france','french','frankreich','franzosischen','francia','frances','francesa'],
+  ['region','Italy','Italien','Italia','italy','italian','italien','italienischen','italia','italiano','italiana'],
+  ['region','Spain','Spanien','España','spain','spanish','spanien','spanischen','espana','espanol','espanola'],
+  ['region','Portugal','Portugal','Portugal','portugal','portuguese','portugiesischen','portugues','portuguesa'],
+  ['region','Netherlands','Niederlande','Países Bajos','netherlands','dutch','niederlande','niederlandischen','holland','paises bajos','holanda'],
+  ['region','Belgium','Belgien','Bélgica','belgium','belgian','belgien','belgica'],
+  ['region','Poland','Polen','Polonia','poland','polish','polen','polnischen','polonia'],
+  ['region','Sweden','Schweden','Suecia','sweden','swedish','schweden','suecia'],
+  ['region','Norway','Norwegen','Noruega','norway','norwegian','norwegen','noruega'],
+  ['region','Denmark','Dänemark','Dinamarca','denmark','danish','danemark','dinamarca'],
+  ['region','Finland','Finnland','Finlandia','finland','finnish','finnland','finlandia'],
+  ['region','United Kingdom','Großbritannien','Reino Unido','united kingdom','uk','britain','british','england','grossbritannien','vereinigtes konigreich','reino unido','inglaterra'],
+  ['region','Ireland','Irland','Irlanda','ireland','irish','irland','irlanda'],
+  ['region','Greece','Griechenland','Grecia','greece','greek','griechenland','grecia'],
+  ['region','Czech Republic','Tschechien','Chequia','czech','tschechien','chequia'],
+  ['region','Hungary','Ungarn','Hungría','hungary','hungarian','ungarn','hungria'],
+  ['region','Turkey','Türkei','Turquía','turkey','turkish','turkiye','turkei','turquia'],
+  ['region','Russia','Russland','Rusia','russia','russian','russland','rusia'],
+  ['region','Ukraine','Ukraine','Ucrania','ukraine','ukrainian','ucrania'],
+  ['region','United States','USA','Estados Unidos','united states','usa','u s','vereinigte staaten','estados unidos','eeuu'],
+  ['region','Canada','Kanada','Canadá','canada','canadian','kanada'],
+  ['region','Mexico','Mexiko','México','mexico','mexican','mexiko','mexicano'],
+  ['region','Brazil','Brasilien','Brasil','brazil','brazilian','brasilien','brasil','brasileno'],
+  ['region','Argentina','Argentinien','Argentina','argentina','argentinian','argentinien','argentino'],
+  ['region','Chile','Chile','Chile','chile','chilean','chileno'],
+  ['region','Colombia','Kolumbien','Colombia','colombia','colombian','kolumbien','colombiano'],
+  ['region','Peru','Peru','Perú','peru','peruvian','peruano'],
+  ['region','China','China','China','china','chinese','chinesischen','chino','china'],
+  ['region','Japan','Japan','Japón','japan','japanese','japanischen','japon'],
+  ['region','India','Indien','India','india','indian','indien'],
+  ['region','South Korea','Südkorea','Corea del Sur','korea','korean','sudkorea','corea'],
+  ['region','Indonesia','Indonesien','Indonesia','indonesia','indonesian','indonesien'],
+  ['region','Australia','Australien','Australia','australia','australian','australien'],
+  ['region','Nigeria','Nigeria','Nigeria','nigeria','nigerian'],
+  ['region','South Africa','Südafrika','Sudáfrica','south africa','sudafrika','sudafrica'],
+  ['region','Europe','Europa','Europa','europe','european','europa','europaischen','europeo','europea'],
+  ['region','Latin America','Lateinamerika','América Latina','latin america','lateinamerika','america latina','latinoamerica'],
+  ['region','Africa','Afrika','África','africa','african','afrika','afrikanischen','africano'],
+  ['region','Asia','Asien','Asia','asia','asian','asien','asiatischen','asiatico'],
+  ['group','students','Studierende','estudiantes','students','student','undergraduate','undergraduates','college','studierende','studierenden','studenten','estudiantes','universitarios'],
+  ['group','children','Kinder','niños','children','child','kids','kinder','kindern','ninos','ninas'],
+  ['group','adolescents','Jugendliche','adolescentes','adolescents','adolescent','teenagers','youth','jugendliche','jugendlichen','adolescentes'],
+  ['group','employees','Beschäftigte','empleados','employees','employee','workers','workforce','mitarbeiter','mitarbeitende','mitarbeitenden','beschaftigte','beschaftigten','arbeitnehmer','empleados','trabajadores'],
+  ['group','older adults','ältere Menschen','personas mayores','older adults','elderly','seniors','senioren','altere menschen','personas mayores','ancianos'],
+  ['group','teachers','Lehrkräfte','docentes','teachers','teacher','educators','lehrkrafte','lehrer','lehrerinnen','docentes','profesores','maestros'],
+  ['group','nurses','Pflegekräfte','enfermeras','nurses','nursing staff','pflegekrafte','pflegepersonal','enfermeras','enfermeros'],
+  ['group','patients','Patienten','pacientes','patients','patienten','pacientes'],
+  ['group','SMEs','KMU','pymes','smes','sme','small and medium','small businesses','kmu','mittelstand','mittelstandische','kleinen und mittleren unternehmen','pymes','pyme'],
+  ['group','women','Frauen','mujeres','women','female','frauen','mujeres'],
+  ['industry','healthcare','Gesundheitswesen','sanidad','healthcare','health care','hospital','hospitals','gesundheitswesen','krankenhaus','krankenhausern','sanidad','hospitales'],
+  ['industry','banking','Bankwesen','banca','banking','banks','bankwesen','banken','banca','bancos'],
+  ['industry','automotive','Automobilindustrie','automoción','automotive','automobile','automobilindustrie','autoindustrie','automocion','automotriz'],
+  ['industry','tourism','Tourismus','turismo','tourism','hospitality','hotel','tourismus','hotellerie','gastgewerbe','turismo','hoteleria'],
+  ['industry','retail','Einzelhandel','comercio minorista','retail','retailing','einzelhandel','comercio minorista'],
+  ['industry','manufacturing','Produktion','manufactura','manufacturing','produktion','fertigung','industrie 4 0','manufactura'],
+  ['industry','agriculture','Landwirtschaft','agricultura','agriculture','farming','farms','landwirtschaft','agricultura'],
+  ['industry','construction','Bauwirtschaft','construcción','construction industry','bauwirtschaft','bauindustrie','construccion'],
+  ['industry','energy sector','Energiewirtschaft','sector energético','energy sector','energiewirtschaft','sector energetico'],
+  ['industry','public sector','öffentlicher Sektor','sector público','public sector','public administration','offentlicher dienst','offentliche verwaltung','offentlichen sektor','sector publico','administracion publica'],
+  ['industry','schools','Schulen','escuelas','school','schools','schule','schulen','escuela','escuelas']
+].map(a=>({type:a[0], label:{en:a[1], de:a[2], es:a[3]}, v:a.slice(4)}));
+function hasPhrase(text, v){ return text.includes(' '+v+' '); }
+function detectConstraints(...texts){
+  const t0 = ' '+texts.filter(Boolean).map(normText).join(' ')+' ';
+  const found = CONSTRAINTS.filter(c=>c.v.some(v=>hasPhrase(t0, v)));
+  // Zeitraum
+  const yr = new Date().getFullYear();
+  const raw = texts.filter(Boolean).join(' ').toLowerCase();
+  let from = null, to = null, m;
+  if((m = raw.match(/\b((?:19|20)\d{2})\s*(?:-|–|bis|to|a|hasta|and|und|y)\s*((?:19|20)\d{2})\b/))){ from = +m[1]; to = +m[2]; }
+  else {
+    if((m = raw.match(/\b(?:seit|ab|nach|since|after|from|desde|a partir de|después de|despues de)\s+((?:19|20)\d{2})\b/))) from = +m[1];
+    if((m = raw.match(/\b(?:vor|before|until|antes de|hasta)\s+((?:19|20)\d{2})\b/))) to = +m[1];
+    if((m = raw.match(/\b(?:letzten|vergangenen|last|past|últimos|ultimos)\s+(\d{1,2})\s+(?:jahre|jahren|years|años|anos)\b/))) from = yr - +m[1];
+  }
+  return {items:found, years: (from||to) ? {from, to} : null};
+}
+function yearFilter(c){
+  if(!c || !c.years) return '';
+  const {from, to} = c.years;
+  return ',publication_year:' + (from && to ? from+'-'+to : from ? '>'+(from-1) : '<'+(to+1));
+}
+function constraintLabel(c){ return c.label[L] || c.label.en; }
+function stemWord(w){ return w.length > 5 ? w.slice(0, Math.max(5, w.length - (w.length > 8 ? 3 : 2))) : w; }
+function termIn(text, term){ return normText(term).split(' ').filter(Boolean).every(w=>text.includes(' '+stemWord(w))); }
+// Relevanz eines Treffers: Suchbegriffe in Titel (voll) oder Abstract (halb), fehlende Pflichtbegriffe werten stark ab
+function relevanceOf(w, info, cons){
+  const title = ' '+normText(w.title||w.display_name||'')+' ';
+  const abs = ' '+normText(invertedToText(w.abstract_inverted_index)).slice(0, 8000)+' ';
+  const sets = info ? [info.custom || info.enTerms || [], info.origTerms || []].filter(x=>x && x.length) : [];
+  let best = {score:0, inT:[], inA:[]};
+  for(const terms of sets){
+    let sc = 0; const inT = [], inA = [];
+    for(const term of terms){ if(termIn(title, term)){ sc += 1; inT.push(term); } else if(termIn(abs, term)){ sc += .5; inA.push(term); } }
+    const r = sc / terms.length;
+    if(r > best.score || !best.inT.length && !best.inA.length) best = {score:r, inT, inA};
+  }
+  const missing = [];
+  let factor = 1;
+  for(const c of (cons && cons.items) || []){
+    if(!c.v.some(v=>hasPhrase(title, v) || hasPhrase(abs, v))){ missing.push(c); factor *= c.type==='region' ? .2 : .5; }
+  }
+  return {score: best.score * factor, inT: best.inT, inA: best.inA, missing};
+}
+function fitLine(x){
+  const r = x.rel; if(!r) return '';
+  const parts = [];
+  if(r.inT.length) parts.push(t('fit_title',{t:r.inT.map(q=>'<b>'+esc(q)+'</b>').join(', ')}));
+  if(r.inA.length) parts.push(t('fit_abs',{t:r.inA.map(q=>'<b>'+esc(q)+'</b>').join(', ')}));
+  let html = parts.length ? `<p class="fit">${t('fit_because',{t:parts.join('; ')})}</p>` : `<p class="fit">${t('fit_weak')}</p>`;
+  if(r.missing && r.missing.length) html += `<p class="fit warn">${t('fit_missing',{t:r.missing.map(c=>esc(constraintLabel(c))).join(', ')})}</p>`;
+  return html;
+}
+let sortMode = 'rel';
 function shownTerms(p){ const i = p.info||{}; return (i.custom || (i.enTerms && i.enTerms.length ? i.enTerms : i.origTerms) || []); }
 
 async function oaFetch(url){
@@ -837,7 +989,8 @@ function langList(codes){
 // Sucht Papers in den angegebenen Sprachen. excludeIds: bereits gefundene Papers (für die erweiterte Suche).
 async function searchReal(q, langs, excludeIds, boolExpr, info){
   const terms = (info && (info.custom || (info.enTerms.length ? info.enTerms : info.origTerms))) || extractTerms(q);
-  const filt = '&filter=has_abstract:true,language:'+langs.join('|')+'&per-page=50&select='+WORK_FIELDS;
+  const cons = info ? info.cons : (boolExpr ? detectConstraints(q) : null);
+  const filt = '&filter=has_abstract:true,language:'+langs.join('|')+yearFilter(cons)+'&per-page=50&select='+WORK_FIELDS;
   const keep = w => !excludeIds || !excludeIds.has(w.id);
   const tryFetch = async url => {
     for(let a=0; a<2; a++){
@@ -868,7 +1021,11 @@ async function searchReal(q, langs, excludeIds, boolExpr, info){
     }
   }
   if(works===null) throw new Error('offline');
-  return {terms, papers:pickCandidates(works).map(fromWork)};
+  // Relevanz zum Thema berechnen und danach sortieren (getrennt vom Qualitäts-Score)
+  const relInfo = info || {origTerms: boolExpr ? boolExpr.expr.replace(/\b(AND|OR|NOT)\b|[()"*?]/g,' ').split(/\s+/).filter(x=>x.length>2) : terms, enTerms:[]};
+  works.forEach(w=>{ w._rel = relevanceOf(w, relInfo, cons); });
+  works.sort((a,b)=>b._rel.score - a._rel.score);
+  return {terms, papers:pickCandidates(works).map(w=>{ const pp = fromWork(w); pp.rel = w._rel; return pp; })};
 }
 
 /* =========================================================
@@ -995,6 +1152,7 @@ async function runSearch(q, customTerms){
   const step = async (lines, progress, minMs)=>{ shownLines = lines; runProgress = progress; renderLog(proj, shownLines); renderSide(); await wait(minMs); };
   if(!boolExpr){
     proj.info = customTerms ? {lang:detectLang(q), origTerms:customTerms, enTerms:customTerms, custom:customTerms} : await understandQuery(q);
+    proj.info.cons = detectConstraints(q, proj.info.en);
   }
   proj.searchLangs = [...new Set(['en', L, (proj.info && proj.info.lang) || L])].filter(l=>['en','de','es'].includes(l));
   await step(1, 1, 500);          // Thema verstanden
@@ -1168,8 +1326,12 @@ function renderTerms(p){
   const el = document.getElementById('resTerms');
   if(p.mode==='check' || !p.info){ el.innerHTML = ''; return; }
   const terms = shownTerms(p);
-  el.innerHTML = `<div class="terms"><span class="muted small">${t('res_terms_l')}</span>${terms.map(x=>`<span class="term">${esc(x)}</span>`).join('')}<button class="linkbtn" onclick="document.getElementById('termsEdit').classList.toggle('open')">${t('res_terms_edit')}</button></div>
+  const cons = p.info.cons || {items:[]};
+  const cchips = cons.items.map(c=>`<span class="term c" title="${esc(t('c_'+c.type))}">${esc(t('c_'+c.type))}: ${esc(constraintLabel(c))}</span>`).join('')
+    + (cons.years ? `<span class="term c">${t('c_years')}: ${cons.years.from && cons.years.to ? t('years_range',{a:cons.years.from,b:cons.years.to}) : cons.years.from ? t('years_from',{a:cons.years.from}) : t('years_to',{b:cons.years.to})}</span>` : '');
+  el.innerHTML = `<div class="terms"><span class="muted small">${t('res_terms_l')}</span>${terms.map(x=>`<span class="term">${esc(x)}</span>`).join('')}${cchips}<button class="linkbtn" onclick="document.getElementById('termsEdit').classList.toggle('open')">${t('res_terms_edit')}</button></div>
     <div class="terms-edit" id="termsEdit"><input id="termsInput" value="${esc(terms.join(', '))}" placeholder="${esc(t('res_terms_ph'))}" onkeydown="if(event.key==='Enter')researchTerms()"><button class="btn primary" onclick="researchTerms()">${t('res_terms_go')}</button></div>
+    ${(cons.items.length || cons.years) ? `<p class="small muted" style="margin:0 0 10px">${t('constraint_note')}</p>` : ''}
     ${p.info.relaxed ? `<p class="small muted" style="margin:0 0 10px">${t('res_relaxed',{t:esc(p.info.relaxed.join(', '))})}</p>` : ''}
     ${p.info.translated ? `<p class="small muted" style="margin:0 0 10px">${t('res_tr_note')}</p>` : ''}`;
 }
@@ -1180,6 +1342,7 @@ function researchTerms(){
 }
 function renderCheckResults(p){
   document.getElementById('resTerms').innerHTML = '';
+  document.getElementById('sortBar').style.display = 'none';
   const f = checkFound(p), n = p.lines.length;
   document.getElementById('resQuery').textContent = t('chk_your',{n});
   document.getElementById('resH').textContent = t('chk_h');
@@ -1256,13 +1419,18 @@ function renderResults(){
   document.getElementById('resExt').innerHTML = (!p.live || (!p.extended && !others.length)) ? '' : (p.extended
     ? `<p class="small muted ext-note">${t('ext_done',{n:p.addedCount||0, langs:langList(p.extLangs||others)})}</p>`
     : `<button class="btn ext" onclick="extendSearch()">${t('ext_btn')}</button><p class="small muted ext-note">${t('ext_hint',{langs:langList(others)})}</p>`);
-  document.getElementById('resList').innerHTML = (!passed(p).length ? `<div class="card soft"><div class="small muted">${t('res_empty',{lang:langList(p.searchLangs||[p.lang||L])})}</div></div>` : '') + passed(p).map(x=>`
+  const hasRel = passed(p).some(x=>x.rel);
+  document.getElementById('sortBar').style.display = hasRel ? '' : 'none';
+  document.getElementById('sortSel').value = sortMode;
+  const list = (hasRel && sortMode==='rel') ? passed(p).slice().sort((a,b)=>(b.rel?b.rel.score:0)-(a.rel?a.rel.score:0) || total(b)-total(a)) : passed(p);
+  document.getElementById('resList').innerHTML = (!passed(p).length ? `<div class="card soft"><div class="small muted">${t('res_empty',{lang:langList(p.searchLangs||[p.lang||L])})}</div></div>` : '') + list.map(x=>`
     <div class="card row" onclick="openPaper(${x.id})">
       ${badge(total(x))}
       <div class="body">
         <p class="title">${esc(x.title)}</p>
         <p class="meta">${esc(x.authors)} · ${x.year} · ${esc(x.journal.split(',')[0])}</p>
         <p class="why">${x.ext&&x.lang?`<span class="pill neutral">${esc(x.lang.toUpperCase())}</span> `:''}<span class="pill ${total(x)>=8?'good':total(x)>=5?'warn':'bad'}">${label(total(x))}</span> <span class="muted small">${t('row_src',{peer:x.refs.peer,total:x.refs.total,y:x.refs.median})}</span></p>
+        ${fitLine(x)}
       </div>
       <div class="arrow">›</div>
     </div>`).join('');
